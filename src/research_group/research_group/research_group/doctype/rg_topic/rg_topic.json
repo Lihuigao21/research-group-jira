@@ -1,0 +1,101 @@
+{
+  "doctype": "DocType",
+  "name": "RG Topic",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "format:RG-TOP-{#####}",
+  "naming_rule": "Expression",
+  "engine": "InnoDB",
+  "title_field": "title",
+  "track_changes": 1,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "title",
+    "student",
+    "direction",
+    "priority",
+    "status",
+    "next_milestone",
+    "target_date"
+  ],
+  "fields": [
+    {
+      "fieldname": "title",
+      "label": "课题名称",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "student",
+      "label": "所属学生",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "direction",
+      "label": "研究方向",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "priority",
+      "label": "优先级",
+      "fieldtype": "Select",
+      "options": "高\n中\n低",
+      "default": "中",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "课题状态",
+      "fieldtype": "Select",
+      "options": "进行中\n已完成\n暂停",
+      "default": "进行中",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "next_milestone",
+      "label": "下一里程碑",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "target_date",
+      "label": "里程碑日期",
+      "fieldtype": "Date"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "课题组教师",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 1,
+      "write": 1
+    },
+    {
+      "role": "课题组学生",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 0,
+      "write": 0
+    }
+  ],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "protect_attached_files": 1,
+  "show_name_in_global_search": 1
+}

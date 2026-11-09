@@ -1,0 +1,64 @@
+{
+  "doctype": "DocType",
+  "name": "RG AI Conversation",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "title_field": "title",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "site",
+    "private_user",
+    "title",
+    "context_version",
+    "status"
+  ],
+  "fields": [
+    {
+      "fieldname": "site",
+      "label": "site",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "private_user",
+      "label": "private_user",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "search_index": 1
+    },
+    {
+      "fieldname": "title",
+      "label": "title",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "context_version",
+      "label": "context_version",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "status",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "active\ndeleted"
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

@@ -1,0 +1,65 @@
+{
+  "doctype": "DocType",
+  "name": "RG Portal Settings",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "track_changes": 1,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "introduction",
+    "navigation_json",
+    "revision",
+    "previous_json",
+    "edited_by",
+    "edited_at"
+  ],
+  "fields": [
+    {
+      "fieldname": "introduction",
+      "label": "首页介绍",
+      "fieldtype": "Long Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "navigation_json",
+      "label": "批准栏目",
+      "fieldtype": "Long Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "revision",
+      "label": "版本",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "previous_json",
+      "label": "上一版",
+      "fieldtype": "Long Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "edited_by",
+      "label": "维护人",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "User"
+    },
+    {
+      "fieldname": "edited_at",
+      "label": "维护时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

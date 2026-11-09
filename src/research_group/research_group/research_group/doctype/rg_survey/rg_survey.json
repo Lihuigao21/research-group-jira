@@ -1,0 +1,140 @@
+{
+  "doctype": "DocType",
+  "name": "RG Survey",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "format:RG-SUR-{#####}",
+  "naming_rule": "Expression",
+  "engine": "InnoDB",
+  "title_field": "title",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "title",
+    "description",
+    "deadline",
+    "kind",
+    "status",
+    "publisher",
+    "published_at",
+    "closed_at",
+    "questions",
+    "participation",
+    "results"
+  ],
+  "fields": [
+    {
+      "fieldname": "title",
+      "label": "投票或问卷标题",
+      "fieldtype": "Data",
+      "length": 200,
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "description",
+      "label": "填写说明",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "deadline",
+      "label": "截止时间",
+      "fieldtype": "Datetime",
+      "in_list_view": 1,
+      "description": "留空表示无自动截止；发布后锁定，以服务器时间为准。"
+    },
+    {
+      "fieldname": "kind",
+      "label": "类型",
+      "fieldtype": "Select",
+      "options": "投票\n问卷",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "状态",
+      "fieldtype": "Select",
+      "options": "草稿\n已发布\n已关闭",
+      "default": "草稿",
+      "read_only": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "publisher",
+      "label": "发起秘书",
+      "fieldtype": "Link",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "published_at",
+      "label": "发布时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "closed_at",
+      "label": "提前关闭时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "questions",
+      "label": "题目",
+      "fieldtype": "Table",
+      "options": "RG Survey Question",
+      "description": "单题为投票，多题为问卷。发布后锁题；单选、多选选项每行一个。"
+    },
+    {
+      "fieldname": "participation",
+      "label": "本人填写",
+      "fieldtype": "HTML"
+    },
+    {
+      "fieldname": "results",
+      "label": "填写进度与结果（仅秘书）",
+      "fieldtype": "HTML"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "课题组教师",
+      "read": 1,
+      "select": 1,
+      "print": 1,
+      "report": 1,
+      "export": 0,
+      "create": 0,
+      "write": 0
+    },
+    {
+      "role": "课题组学生",
+      "read": 1,
+      "select": 1,
+      "print": 1,
+      "report": 1,
+      "export": 0,
+      "create": 0,
+      "write": 0
+    },
+    {
+      "role": "课题组秘书",
+      "read": 1,
+      "select": 1,
+      "print": 1,
+      "report": 1,
+      "export": 1,
+      "create": 1,
+      "write": 1
+    }
+  ],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "protect_attached_files": 1,
+  "show_name_in_global_search": 0
+}

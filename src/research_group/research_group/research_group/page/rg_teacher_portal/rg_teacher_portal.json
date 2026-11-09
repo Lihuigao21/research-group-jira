@@ -1,0 +1,14 @@
+{
+  "doctype": "Page",
+  "name": "rg-teacher-portal",
+  "page_name": "rg-teacher-portal",
+  "title": "教师工作台",
+  "module": "Research Group",
+  "standard": "Yes",
+  "system_page": 0,
+  "roles": [
+    {
+      "role": "课题组教师"
+    }
+  ]
+}

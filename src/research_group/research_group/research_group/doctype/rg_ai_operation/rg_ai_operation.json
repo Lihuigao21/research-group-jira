@@ -1,0 +1,128 @@
+{
+  "doctype": "DocType",
+  "name": "RG AI Operation",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "title_field": "private_user",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "site",
+    "private_user",
+    "conversation",
+    "action",
+    "parameters",
+    "preview",
+    "sources",
+    "expected",
+    "status",
+    "expires_at",
+    "result",
+    "target",
+    "run_id"
+  ],
+  "fields": [
+    {
+      "fieldname": "site",
+      "label": "site",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "private_user",
+      "label": "private_user",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "search_index": 1
+    },
+    {
+      "fieldname": "conversation",
+      "label": "conversation",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "action",
+      "label": "action",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "memory_change\nplan_change\nprogress\nappointment\nmanuscript_suggestion"
+    },
+    {
+      "fieldname": "parameters",
+      "label": "parameters",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "preview",
+      "label": "preview",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "sources",
+      "label": "sources",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "expected",
+      "label": "expected",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "status",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "pending\nconsumed\ncancelled\nexpired"
+    },
+    {
+      "fieldname": "expires_at",
+      "label": "expires_at",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "result",
+      "label": "result",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "target",
+      "label": "target",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "run_id",
+      "label": "run_id",
+      "fieldtype": "Data",
+      "length": 140,
+      "read_only": 1,
+      "search_index": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

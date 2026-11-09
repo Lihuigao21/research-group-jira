@@ -1,0 +1,112 @@
+{
+  "doctype": "DocType",
+  "name": "RG Manuscript Selection",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "manuscript",
+    "manuscript_version",
+    "private_user",
+    "original_text",
+    "sha256",
+    "version_sha256",
+    "anchor",
+    "extractor_version",
+    "expires_at",
+    "status"
+  ],
+  "fields": [
+    {
+      "fieldname": "manuscript",
+      "label": "manuscript",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "reqd": 1,
+      "search_index": 1,
+      "options": "RG Manuscript"
+    },
+    {
+      "fieldname": "manuscript_version",
+      "label": "manuscript_version",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "reqd": 1,
+      "options": "RG Manuscript Version"
+    },
+    {
+      "fieldname": "private_user",
+      "label": "private_user",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "reqd": 1,
+      "search_index": 1,
+      "options": "User"
+    },
+    {
+      "fieldname": "original_text",
+      "label": "original_text",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "sha256",
+      "label": "sha256",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "reqd": 1,
+      "length": 64
+    },
+    {
+      "fieldname": "version_sha256",
+      "label": "version_sha256",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "reqd": 1,
+      "length": 64
+    },
+    {
+      "fieldname": "anchor",
+      "label": "anchor",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "read_only": 1,
+      "length": 300
+    },
+    {
+      "fieldname": "extractor_version",
+      "label": "extractor_version",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 100
+    },
+    {
+      "fieldname": "expires_at",
+      "label": "expires_at",
+      "fieldtype": "Datetime",
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "status",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "reqd": 1,
+      "options": "active\nrevoked\nexpired"
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

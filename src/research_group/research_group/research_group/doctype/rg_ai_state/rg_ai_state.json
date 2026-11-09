@@ -1,0 +1,61 @@
+{
+  "doctype": "DocType",
+  "name": "RG AI State",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "title_field": "private_user",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "site",
+    "private_user",
+    "context_version",
+    "auth_version",
+    "memory_enabled"
+  ],
+  "fields": [
+    {
+      "fieldname": "site",
+      "label": "site",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "private_user",
+      "label": "private_user",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "search_index": 1
+    },
+    {
+      "fieldname": "context_version",
+      "label": "context_version",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "auth_version",
+      "label": "auth_version",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "memory_enabled",
+      "label": "memory_enabled",
+      "fieldtype": "Check",
+      "read_only": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

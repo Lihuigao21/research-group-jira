@@ -1,0 +1,10 @@
+{
+  "project": "Apache POI",
+  "commit": "0614835c55f44ab6f3e9b0850ca51e0e53a65a49",
+  "license": "Apache-2.0; see existing APACHE-POI-LICENSE.txt and APACHE-POI-NOTICE.txt",
+  "file": "sample.docx",
+  "source_url": "https://raw.githubusercontent.com/apache/poi/0614835c55f44ab6f3e9b0850ca51e0e53a65a49/test-data/document/sample.docx",
+  "sha256": "be4fc1bf778ad8183f714e09b9df40669de34e9ecbc3adecfc8953f00749036f",
+  "bytes": 14860,
+  "retrieved_utc": "2026-11-08"
+}

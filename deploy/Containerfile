@@ -1,0 +1,21 @@
+ARG FRAPPE_BASE_IMAGE=research-group-frappe-base:v16.55.2
+FROM ${FRAPPE_BASE_IMAGE}
+USER root
+COPY deploy/patch-nginx-origin.py /tmp/rg-patch-nginx-origin.py
+RUN python /tmp/rg-patch-nginx-origin.py /templates/nginx/frappe.conf.template \
+    && rm /tmp/rg-patch-nginx-origin.py
+COPY deploy/patch-nginx-host.py /tmp/rg-patch-nginx-host.py
+RUN python /tmp/rg-patch-nginx-host.py /templates/nginx/frappe.conf.template \
+    && rm /tmp/rg-patch-nginx-host.py
+USER frappe
+WORKDIR /home/frappe/frappe-bench
+COPY --chown=frappe:0 src/research_group /home/frappe/frappe-bench/apps/research_group
+RUN ./env/bin/pip install --no-cache-dir -e apps/research_group \
+    && ./env/bin/python -c "from pathlib import Path; p=Path('sites/apps.txt'); rows=p.read_text().splitlines(); p.write_text('\n'.join(dict.fromkeys([*rows, 'research_group']))+'\n')" \
+    && mkdir -p sites/assets \
+    && cp -a assets/. sites/assets/ \
+    && bench build --app research_group \
+    && cp -a sites/assets/. assets/ \
+    && rm -rf sites/assets
+ENV TZ=Asia/Shanghai
+

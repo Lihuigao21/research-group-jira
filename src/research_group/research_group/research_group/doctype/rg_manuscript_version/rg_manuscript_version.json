@@ -1,0 +1,118 @@
+{
+  "doctype": "DocType",
+  "name": "RG Manuscript Version",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "manuscript",
+    "version",
+    "parent_version",
+    "kind",
+    "original_filename",
+    "material_file",
+    "submitted_by",
+    "submitted_at",
+    "size_bytes",
+    "sha256",
+    "upload_key"
+  ],
+  "fields": [
+    {
+      "fieldname": "manuscript",
+      "label": "manuscript",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "reqd": 1,
+      "search_index": 1,
+      "options": "RG Manuscript"
+    },
+    {
+      "fieldname": "version",
+      "label": "version",
+      "fieldtype": "Int",
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "parent_version",
+      "label": "parent_version",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "RG Manuscript Version"
+    },
+    {
+      "fieldname": "kind",
+      "label": "kind",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "reqd": 1,
+      "options": "student_draft\nteacher_annotation"
+    },
+    {
+      "fieldname": "original_filename",
+      "label": "original_filename",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "read_only": 1,
+      "reqd": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "material_file",
+      "label": "material_file",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "File"
+    },
+    {
+      "fieldname": "submitted_by",
+      "label": "submitted_by",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "reqd": 1,
+      "options": "User"
+    },
+    {
+      "fieldname": "submitted_at",
+      "label": "submitted_at",
+      "fieldtype": "Datetime",
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "size_bytes",
+      "label": "size_bytes",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "sha256",
+      "label": "sha256",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "reqd": 1,
+      "length": 64
+    },
+    {
+      "fieldname": "upload_key",
+      "label": "upload_key",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "reqd": 1,
+      "length": 64,
+      "unique": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

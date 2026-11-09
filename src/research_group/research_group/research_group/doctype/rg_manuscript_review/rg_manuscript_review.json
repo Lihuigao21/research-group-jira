@@ -1,0 +1,151 @@
+{
+  "doctype": "DocType",
+  "name": "RG Manuscript Review",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "manuscript",
+    "manuscript_version",
+    "kind",
+    "parent_review",
+    "author",
+    "content",
+    "anchor",
+    "status",
+    "status_history",
+    "original_text",
+    "reason",
+    "source_selection",
+    "source_sha256",
+    "ai_operation",
+    "recorded_at"
+  ],
+  "fields": [
+    {
+      "fieldname": "manuscript",
+      "label": "manuscript",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "reqd": 1,
+      "search_index": 1,
+      "options": "RG Manuscript"
+    },
+    {
+      "fieldname": "manuscript_version",
+      "label": "manuscript_version",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "reqd": 1,
+      "search_index": 1,
+      "options": "RG Manuscript Version"
+    },
+    {
+      "fieldname": "kind",
+      "label": "kind",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "reqd": 1,
+      "options": "teacher_comment\nstudent_reply\nai_suggestion"
+    },
+    {
+      "fieldname": "parent_review",
+      "label": "parent_review",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "RG Manuscript Review"
+    },
+    {
+      "fieldname": "author",
+      "label": "author",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "reqd": 1,
+      "options": "User"
+    },
+    {
+      "fieldname": "content",
+      "label": "content",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "anchor",
+      "label": "anchor",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "read_only": 1,
+      "length": 300
+    },
+    {
+      "fieldname": "status",
+      "label": "status",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "reqd": 1,
+      "options": "open\naddressed\nclosed"
+    },
+    {
+      "fieldname": "status_history",
+      "label": "状态变化记录",
+      "fieldtype": "Long Text",
+      "read_only": 1,
+      "ignore_xss_filter": 1
+    },
+    {
+      "fieldname": "original_text",
+      "label": "original_text",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "reason",
+      "label": "reason",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "source_selection",
+      "label": "source_selection",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "RG Manuscript Selection"
+    },
+    {
+      "fieldname": "source_sha256",
+      "label": "source_sha256",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 64
+    },
+    {
+      "fieldname": "ai_operation",
+      "label": "ai_operation",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "recorded_at",
+      "label": "recorded_at",
+      "fieldtype": "Datetime",
+      "read_only": 1,
+      "reqd": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

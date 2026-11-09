@@ -1,0 +1,1 @@
+from research_group.portals import RGDirectionTopic

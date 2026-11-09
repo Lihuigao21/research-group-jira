@@ -1,0 +1,146 @@
+{
+  "doctype": "DocType",
+  "name": "RG Registration",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "title_field": "display_name",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "display_name",
+    "student_id",
+    "email",
+    "reserved_student_id",
+    "reserved_email",
+    "status",
+    "token_hash",
+    "token_version",
+    "expires_at",
+    "requested_at",
+    "verified_at",
+    "reviewed_by",
+    "reviewed_at",
+    "review_note",
+    "created_user"
+  ],
+  "fields": [
+    {
+      "fieldname": "display_name",
+      "label": "姓名",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 80,
+      "reqd": 1
+    },
+    {
+      "fieldname": "student_id",
+      "label": "学号",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 32,
+      "reqd": 1
+    },
+    {
+      "fieldname": "email",
+      "label": "申请邮箱",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "reqd": 1
+    },
+    {
+      "fieldname": "reserved_student_id",
+      "label": "当前占用学号",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 32,
+      "unique": 1,
+      "hidden": 1
+    },
+    {
+      "fieldname": "reserved_email",
+      "label": "当前占用邮箱",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "unique": 1,
+      "hidden": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "申请状态",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "reqd": 1,
+      "options": "pending_verification\nawaiting_approval\napproved\nrejected\nexpired"
+    },
+    {
+      "fieldname": "token_hash",
+      "label": "一次性验证摘要",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 64,
+      "hidden": 1
+    },
+    {
+      "fieldname": "token_version",
+      "label": "验证版本",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "expires_at",
+      "label": "验证失效时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "requested_at",
+      "label": "最近申请时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "verified_at",
+      "label": "邮箱验证时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "reviewed_by",
+      "label": "审核人",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "User"
+    },
+    {
+      "fieldname": "reviewed_at",
+      "label": "审核时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "review_note",
+      "label": "审核说明",
+      "fieldtype": "Long Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "created_user",
+      "label": "建立的登录身份",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "User"
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

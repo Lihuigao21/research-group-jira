@@ -1,0 +1,20 @@
+{
+  "doctype": "Page",
+  "name": "rg-meals",
+  "page_name": "rg-meals",
+  "title": "工作餐",
+  "module": "Research Group",
+  "standard": "Yes",
+  "system_page": 0,
+  "roles": [
+    {
+      "role": "课题组教师"
+    },
+    {
+      "role": "课题组秘书"
+    },
+    {
+      "role": "课题组学生"
+    }
+  ]
+}

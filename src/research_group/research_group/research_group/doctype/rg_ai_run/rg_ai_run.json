@@ -1,0 +1,161 @@
+{
+  "doctype": "DocType",
+  "name": "RG AI Run",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "title_field": "private_user",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "site",
+    "private_user",
+    "conversation",
+    "queue_topic",
+    "selection_ids",
+    "expected",
+    "config_version",
+    "mode",
+    "status",
+    "reserved_tokens",
+    "used_tokens",
+    "usage_known",
+    "started_at",
+    "finished_at",
+    "error_class",
+    "tool_order",
+    "model_calls",
+    "elapsed"
+  ],
+  "fields": [
+    {
+      "fieldname": "site",
+      "label": "site",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "private_user",
+      "label": "private_user",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "search_index": 1
+    },
+    {
+      "fieldname": "conversation",
+      "label": "conversation",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "queue_topic",
+      "label": "queue_topic",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "selection_ids",
+      "label": "本轮明确授权选区",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "expected",
+      "label": "expected",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "config_version",
+      "label": "config_version",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "mode",
+      "label": "mode",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "status",
+      "label": "status",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "queued\nrunning\ncompleted\nfailed\ncancelled\nexpired"
+    },
+    {
+      "fieldname": "reserved_tokens",
+      "label": "reserved_tokens",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "used_tokens",
+      "label": "used_tokens",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "usage_known",
+      "label": "usage_known",
+      "fieldtype": "Check",
+      "read_only": 1
+    },
+    {
+      "fieldname": "started_at",
+      "label": "started_at",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "finished_at",
+      "label": "finished_at",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "error_class",
+      "label": "error_class",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "tool_order",
+      "label": "tool_order",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "model_calls",
+      "label": "model_calls",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "elapsed",
+      "label": "elapsed",
+      "fieldtype": "Float",
+      "read_only": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

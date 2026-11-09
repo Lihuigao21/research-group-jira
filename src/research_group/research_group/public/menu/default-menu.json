@@ -1,0 +1,80 @@
+{
+  "version": "2026-11-07",
+  "mode": "priced",
+  "budgetCents": 5000,
+  "items": [
+    {
+      "id": "meal-1",
+      "category": "meal",
+      "name": "滑炒牛肉生菜拌饭",
+      "priceCents": 2500,
+      "spice": 0,
+      "description": "牛里脊、煎蛋、红薯、香菇、生菜、海苔碎。料汁有一点小米辣。",
+      "staples": ["白米饭", "糙米饭"]
+    },
+    {
+      "id": "meal-2",
+      "category": "meal",
+      "name": "猛火泡椒牛肉拌饭",
+      "priceCents": 2500,
+      "spice": 5,
+      "description": "牛里脊、煎蛋、芹菜，混合泡椒、生姜等一起炒。",
+      "staples": ["白米饭", "糙米饭"]
+    },
+    {
+      "id": "meal-3",
+      "category": "meal",
+      "name": "套餐",
+      "priceCents": 2700,
+      "spice": 0,
+      "description": "土豆炖牛肉、青椒炒鸡腿肉、绿叶菜（如菠菜）。",
+      "staples": ["白米饭", "糙米饭"]
+    },
+    {
+      "id": "meal-4",
+      "category": "meal",
+      "name": "香烤鸡腿肉&泰国黑虎虾",
+      "priceCents": 2500,
+      "spice": 0,
+      "description": "香茅草烤鸡腿肉、泰国黑虎虾、6种蔬菜。",
+      "staples": ["白米饭", "糙米饭"]
+    },
+    {
+      "id": "meal-5",
+      "category": "meal",
+      "name": "香烤猪颈肉&泰国黑虎虾",
+      "priceCents": 2500,
+      "spice": 0,
+      "description": "炭烤猪颈肉、泰国黑虎虾、6种蔬菜。",
+      "staples": ["白米饭", "糙米饭"]
+    },
+    {
+      "id": "meal-6",
+      "category": "meal",
+      "name": "糖醋小排&香菇青菜",
+      "priceCents": 2500,
+      "spice": 0,
+      "description": "糖醋小排、香菇青菜。",
+      "staples": ["白米饭", "糙米饭"]
+    },
+    {
+      "id": "meal-7",
+      "category": "meal",
+      "name": "擂椒皮蛋肉沫拌面",
+      "priceCents": 2200,
+      "spice": 3.5,
+      "description": "皮蛋、肉沫、青椒、贡菜。",
+      "fixedStaple": "鸡蛋面"
+    },
+    {"id": "addon-1", "category": "addon", "name": "时蔬", "priceCents": 200, "spice": 0, "description": "单独加料"},
+    {"id": "addon-2", "category": "addon", "name": "煎蛋", "priceCents": 200, "spice": 0, "description": "单独加料"},
+    {"id": "addon-3", "category": "addon", "name": "白煮蛋", "priceCents": 200, "spice": 0, "description": "单独加料"},
+    {"id": "addon-4", "category": "addon", "name": "香烤鸡腿肉", "priceCents": 1000, "spice": 0, "description": "单独加料"},
+    {"id": "addon-5", "category": "addon", "name": "香烤鸡胸肉", "priceCents": 1000, "spice": 0, "description": "单独加料"},
+    {"id": "addon-6", "category": "addon", "name": "香烤猪颈肉", "priceCents": 1000, "spice": 0, "description": "单独加料"},
+    {"id": "addon-7", "category": "addon", "name": "泰国黑虎虾（3只）", "priceCents": 1800, "spice": 0, "description": "单独加料，每份3只"}
+  ],
+  "mainDishes": [],
+  "sideDishes": [],
+  "fixedExtras": []
+}

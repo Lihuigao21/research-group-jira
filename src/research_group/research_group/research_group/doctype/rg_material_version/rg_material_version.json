@@ -1,0 +1,140 @@
+{
+  "doctype": "DocType",
+  "name": "RG Material Version",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "format:RG-MAT-{#####}",
+  "naming_rule": "Expression",
+  "engine": "InnoDB",
+  "title_field": "original_filename",
+  "track_changes": 1,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "report",
+    "version",
+    "report_topic",
+    "original_filename",
+    "material_file",
+    "submitted_by",
+    "submitted_at",
+    "late",
+    "size_bytes",
+    "sha256"
+  ],
+  "fields": [
+    {
+      "fieldname": "report",
+      "label": "报告安排",
+      "fieldtype": "Link",
+      "options": "RG Meeting Report",
+      "reqd": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "version",
+      "label": "版本",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "report_topic",
+      "label": "当时报告主题",
+      "fieldtype": "Data",
+      "length": 200,
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "original_filename",
+      "label": "原文件名",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "material_file",
+      "label": "材料文件",
+      "fieldtype": "Link",
+      "options": "File",
+      "read_only": 1
+    },
+    {
+      "fieldname": "submitted_by",
+      "label": "提交学生",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "submitted_at",
+      "label": "服务端提交时间",
+      "fieldtype": "Datetime",
+      "reqd": 1,
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "late",
+      "label": "迟交",
+      "fieldtype": "Check",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "size_bytes",
+      "label": "字节数",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "sha256",
+      "label": "SHA256",
+      "fieldtype": "Data",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "课题组教师",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 0,
+      "write": 0
+    },
+    {
+      "role": "课题组学生",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 0,
+      "write": 0
+    },
+    {
+      "role": "课题组秘书",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 0,
+      "write": 0
+    }
+  ],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "protect_attached_files": 1,
+  "show_name_in_global_search": 1
+}

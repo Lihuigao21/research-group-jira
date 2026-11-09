@@ -1,0 +1,30 @@
+FROM python:3.14-slim-trixie@sha256:af8a5aa14780025dbfbcfbc81bd8a91ebd87711dd5b0f48ed71090949dd7cb1d
+
+ARG REDIS_DEB_VERSION=5:8.0.2-3+deb13u3
+LABEL org.opencontainers.image.title="Research Group Redis Debian fallback" \
+      org.opencontainers.image.version="8.0.2-debian13u3" \
+      org.opencontainers.image.description="Locally built Debian packages; not the Docker Official Redis image"
+
+COPY deploy/dependencies/debian.sources /etc/apt/sources.list.d/debian.sources
+RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
+    && chmod 755 /usr/sbin/policy-rc.d \
+    && test "${REDIS_DEB_VERSION}" = '5:8.0.2-3+deb13u3' \
+    && apt-get -o APT::Update::Error-Mode=any -o Acquire::Retries=3 update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+       "redis-server=${REDIS_DEB_VERSION}" "redis-tools=${REDIS_DEB_VERSION}" \
+       ca-certificates gosu \
+    && test "$(dpkg-query -W -f='${Version}' redis-server)" = "${REDIS_DEB_VERSION}" \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /data /usr/local/share/research-group-dependencies \
+    && chown redis:redis /data \
+    && dpkg-query -W > /usr/local/share/research-group-dependencies/packages.txt \
+    && redis-server --version > /usr/local/share/research-group-dependencies/server-version.txt
+COPY deploy/dependencies/redis/docker-entrypoint.sh /usr/local/bin/redis-entrypoint.sh
+RUN chmod 755 /usr/local/bin/redis-entrypoint.sh
+
+WORKDIR /data
+ENV LANG=C.UTF-8
+EXPOSE 6379
+HEALTHCHECK --interval=5s --timeout=3s --retries=12 CMD ["redis-cli", "ping"]
+ENTRYPOINT ["redis-entrypoint.sh"]
+CMD ["redis-server"]

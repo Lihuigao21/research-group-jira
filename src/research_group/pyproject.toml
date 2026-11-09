@@ -1,0 +1,34 @@
+[build-system]
+requires = ["flit_core>=3.4,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "research_group"
+authors = [{name = "Research Group"}]
+description = "课题组核心协作：进展、讨论和组会材料"
+requires-python = ">=3.14,<3.15"
+readme = "README.md"
+dynamic = ["version"]
+dependencies = [
+    "olefile==0.47",
+    "pypdf==6.19.0",
+    "langchain==1.4.9",
+    "langchain-core==1.7.6",
+    "langchain-openai==1.7.4",
+    "langgraph==1.2.20",
+    "openai==2.45.0",
+    # Keep Frappe 16.55.2's shared dependencies inside its supported ranges.
+    "httpx==0.28.1",
+    "orjson==3.11.9",
+    "pydantic==2.12.5",
+    "requests==2.33.1",
+    "tenacity==9.1.4",
+    "websockets==15.0.1",
+]
+
+[tool.bench.frappe-dependencies]
+frappe = "==16.55.2"
+
+[tool.ruff]
+line-length = 110
+

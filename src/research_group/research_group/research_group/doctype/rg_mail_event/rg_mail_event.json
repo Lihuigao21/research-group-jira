@@ -1,0 +1,193 @@
+{
+  "doctype": "DocType",
+  "name": "RG Mail Event",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "title_field": "subject",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "site",
+    "actor",
+    "message",
+    "event_key",
+    "template",
+    "related_doctype",
+    "related_name",
+    "related_binding",
+    "recipient_user",
+    "recipient_email",
+    "email_version",
+    "subject",
+    "body_ciphertext",
+    "payload_digest",
+    "from_address",
+    "expires_at",
+    "status",
+    "attempts",
+    "last_attempt_at",
+    "submitted_at",
+    "error_class"
+  ],
+  "fields": [
+    {
+      "fieldname": "site",
+      "label": "site",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "actor",
+      "label": "actor",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "search_index": 1
+    },
+    {
+      "fieldname": "message",
+      "label": "message",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "search_index": 1
+    },
+    {
+      "fieldname": "event_key",
+      "label": "event_key",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "read_only": 1,
+      "length": 200,
+      "unique": 1
+    },
+    {
+      "fieldname": "template",
+      "label": "template",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 80
+    },
+    {
+      "fieldname": "recipient_user",
+      "label": "recipient_user",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "search_index": 1
+    },
+    {
+      "fieldname": "related_doctype",
+      "label": "related_doctype",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "related_name",
+      "label": "related_name",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "read_only": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "related_binding",
+      "label": "related_binding",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 64
+    },
+    {
+      "fieldname": "recipient_email",
+      "label": "recipient_email",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 254
+    },
+    {
+      "fieldname": "email_version",
+      "label": "email_version",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "subject",
+      "label": "subject",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "body_ciphertext",
+      "label": "body_ciphertext",
+      "fieldtype": "Long Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "payload_digest",
+      "label": "payload_digest",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 64
+    },
+    {
+      "fieldname": "from_address",
+      "label": "from_address",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 254
+    },
+    {
+      "fieldname": "expires_at",
+      "label": "expires_at",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "status",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "queued\npreparing\nsending\ncaptured\nunconfigured\nfailed\nunknown\nsubmitted\ncancelled",
+      "search_index": 1
+    },
+    {
+      "fieldname": "attempts",
+      "label": "attempts",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "last_attempt_at",
+      "label": "last_attempt_at",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "submitted_at",
+      "label": "submitted_at",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "error_class",
+      "label": "error_class",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 100
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

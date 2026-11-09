@@ -1,0 +1,14 @@
+{
+  "doctype": "Page",
+  "name": "rg-student-portal",
+  "page_name": "rg-student-portal",
+  "title": "学生工作台",
+  "module": "Research Group",
+  "standard": "Yes",
+  "system_page": 0,
+  "roles": [
+    {
+      "role": "课题组学生"
+    }
+  ]
+}

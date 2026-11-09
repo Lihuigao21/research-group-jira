@@ -1,0 +1,76 @@
+{
+  "doctype": "DocType",
+  "name": "RG Meal Order Item",
+  "module": "Research Group",
+  "custom": 0,
+  "engine": "InnoDB",
+  "istable": 1,
+  "track_changes": 0,
+  "allow_rename": 0,
+  "field_order": [
+    "item_id",
+    "category",
+    "item_name",
+    "price_cents",
+    "quantity",
+    "staple",
+    "subtotal_cents"
+  ],
+  "fields": [
+    {
+      "fieldname": "item_id",
+      "label": "餐品标识",
+      "fieldtype": "Data",
+      "length": 40,
+      "reqd": 1
+    },
+    {
+      "fieldname": "category",
+      "label": "分类",
+      "fieldtype": "Select",
+      "options": "meal\naddon",
+      "reqd": 1
+    },
+    {
+      "fieldname": "item_name",
+      "label": "餐品名称",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "length": 200,
+      "reqd": 1
+    },
+    {
+      "fieldname": "price_cents",
+      "label": "单价（分）",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "quantity",
+      "label": "份数",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "staple",
+      "label": "主食",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "length": 80
+    },
+    {
+      "fieldname": "subtotal_cents",
+      "label": "小计（分）",
+      "fieldtype": "Int",
+      "reqd": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1,
+  "sort_field": "creation",
+  "sort_order": "DESC"
+}

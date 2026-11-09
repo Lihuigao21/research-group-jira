@@ -1,0 +1,126 @@
+{
+  "doctype": "DocType",
+  "name": "RG Survey Response",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "naming_rule": "Random",
+  "engine": "InnoDB",
+  "title_field": "respondent_name",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "survey",
+    "respondent",
+    "respondent_name",
+    "submitted_at",
+    "updated_at",
+    "revision",
+    "answers_json",
+    "answer_preview"
+  ],
+  "fields": [
+    {
+      "fieldname": "survey",
+      "label": "问卷",
+      "fieldtype": "Link",
+      "options": "RG Survey",
+      "reqd": 1,
+      "read_only": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "respondent",
+      "label": "填写账号",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1,
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "respondent_name",
+      "label": "填写人姓名",
+      "fieldtype": "Data",
+      "length": 140,
+      "reqd": 1,
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "submitted_at",
+      "label": "首次提交时间",
+      "fieldtype": "Datetime",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "updated_at",
+      "label": "最近修改时间",
+      "fieldtype": "Datetime",
+      "reqd": 1,
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "revision",
+      "label": "修订次数",
+      "fieldtype": "Int",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "answers_json",
+      "label": "答卷数据",
+      "fieldtype": "Long Text",
+      "reqd": 1,
+      "read_only": 1,
+      "hidden": 1
+    },
+    {
+      "fieldname": "answer_preview",
+      "label": "答卷内容",
+      "fieldtype": "HTML"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "课题组教师",
+      "read": 1,
+      "select": 1,
+      "print": 0,
+      "report": 0,
+      "export": 0,
+      "create": 0,
+      "write": 0
+    },
+    {
+      "role": "课题组学生",
+      "read": 1,
+      "select": 1,
+      "print": 0,
+      "report": 0,
+      "export": 0,
+      "create": 0,
+      "write": 0
+    },
+    {
+      "role": "课题组秘书",
+      "read": 1,
+      "select": 1,
+      "print": 1,
+      "report": 1,
+      "export": 1,
+      "create": 0,
+      "write": 0
+    }
+  ],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "protect_attached_files": 1,
+  "show_name_in_global_search": 0
+}

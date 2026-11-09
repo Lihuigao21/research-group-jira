@@ -1,0 +1,56 @@
+{
+  "doctype": "Workspace",
+  "name": "学生工作台",
+  "label": "学生工作台",
+  "title": "学生工作台",
+  "module": "Research Group",
+  "type": "Workspace",
+  "public": 1,
+  "standard": 1,
+  "is_hidden": 0,
+  "icon": "project",
+  "sequence_id": 4,
+  "roles": [
+    {
+      "role": "课题组学生"
+    }
+  ],
+  "shortcuts": [
+    {
+      "label": "进入学生工作台",
+      "link_to": "rg-student-portal",
+      "type": "Page",
+      "color": "Blue"
+    },
+    {
+      "label": "我的账号",
+      "link_to": "rg-accounts",
+      "type": "Page",
+      "color": "Blue"
+    },
+    {
+      "label": "工作餐",
+      "link_to": "rg-meals",
+      "type": "Page",
+      "color": "Blue"
+    },
+    {
+      "label": "我的 AI 助手",
+      "link_to": "rg-ai-assistant",
+      "type": "Page",
+      "color": "Blue"
+    },
+    {
+      "label": "论文修改",
+      "link_to": "rg-manuscripts",
+      "type": "Page",
+      "color": "Blue"
+    }
+  ],
+  "content": "[{\"id\": \"rg-role-title\", \"type\": \"header\", \"data\": {\"text\": \"<b>学生工作台</b>\", \"col\": 12}}, {\"id\": \"rg-role-0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"进入学生工作台\", \"col\": 12}}, {\"id\": \"rg-role-1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"我的账号\", \"col\": 4}}, {\"id\": \"rg-role-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"工作餐\", \"col\": 4}}, {\"id\": \"rg-role-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"我的 AI 助手\", \"col\": 4}}, {\"id\": \"rg-role-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"论文修改\", \"col\": 4}}]",
+  "links": [],
+  "charts": [],
+  "number_cards": [],
+  "quick_lists": [],
+  "custom_blocks": []
+}

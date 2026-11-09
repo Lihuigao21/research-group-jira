@@ -1,0 +1,145 @@
+{
+  "doctype": "DocType",
+  "name": "RG Account Profile",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "title_field": "user",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "user",
+    "student_id",
+    "contact_email",
+    "contact_verified",
+    "email_version",
+    "pending_email",
+    "pending_token_hash",
+    "pending_expires",
+    "pending_requested_at",
+    "phone",
+    "bio",
+    "service_pause_audit",
+    "pause_user_modified",
+    "pause_member_modified",
+    "pause_roles_sha256"
+  ],
+  "fields": [
+    {
+      "fieldname": "user",
+      "label": "固定登录身份",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "User",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "student_id",
+      "label": "核实学号",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 32,
+      "unique": 1
+    },
+    {
+      "fieldname": "contact_email",
+      "label": "已验证联系邮箱",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "unique": 1
+    },
+    {
+      "fieldname": "contact_verified",
+      "label": "已验证",
+      "fieldtype": "Check",
+      "read_only": 1
+    },
+    {
+      "fieldname": "email_version",
+      "label": "联系邮箱版本",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "pending_email",
+      "label": "待验证邮箱",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "pending_token_hash",
+      "label": "待验证一次性摘要",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 64,
+      "hidden": 1
+    },
+    {
+      "fieldname": "pending_expires",
+      "label": "待验证失效时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "pending_requested_at",
+      "label": "待验证申请时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "phone",
+      "label": "联系电话",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 32
+    },
+    {
+      "fieldname": "bio",
+      "label": "个人简介",
+      "fieldtype": "Long Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "service_pause_audit",
+      "label": "本站暂停来源",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "RG Account Audit",
+      "hidden": 1
+    },
+    {
+      "fieldname": "pause_user_modified",
+      "label": "暂停账号版本",
+      "fieldtype": "Datetime",
+      "read_only": 1,
+      "hidden": 1
+    },
+    {
+      "fieldname": "pause_member_modified",
+      "label": "暂停成员版本",
+      "fieldtype": "Datetime",
+      "read_only": 1,
+      "hidden": 1
+    },
+    {
+      "fieldname": "pause_roles_sha256",
+      "label": "暂停角色摘要",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 64,
+      "hidden": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

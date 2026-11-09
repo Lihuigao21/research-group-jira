@@ -1,0 +1,83 @@
+{
+  "doctype": "DocType",
+  "name": "RG Manuscript",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "title",
+    "author",
+    "reviewer",
+    "topic",
+    "status",
+    "current_version",
+    "revision"
+  ],
+  "fields": [
+    {
+      "fieldname": "title",
+      "label": "title",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "read_only": 1,
+      "reqd": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "author",
+      "label": "author",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "reqd": 1,
+      "search_index": 1,
+      "options": "User"
+    },
+    {
+      "fieldname": "reviewer",
+      "label": "reviewer",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "reqd": 1,
+      "search_index": 1,
+      "options": "User"
+    },
+    {
+      "fieldname": "topic",
+      "label": "topic",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "RG Topic"
+    },
+    {
+      "fieldname": "status",
+      "label": "status",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "reqd": 1,
+      "options": "draft\nunder_review\nrevision_requested\ncomplete"
+    },
+    {
+      "fieldname": "current_version",
+      "label": "current_version",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "revision",
+      "label": "revision",
+      "fieldtype": "Int",
+      "read_only": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

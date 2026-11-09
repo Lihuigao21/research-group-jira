@@ -1,0 +1,158 @@
+{
+  "doctype": "DocType",
+  "name": "RG Meal Order",
+  "module": "Research Group",
+  "custom": 0,
+  "engine": "InnoDB",
+  "istable": 0,
+  "track_changes": 0,
+  "allow_rename": 0,
+  "field_order": [
+    "round",
+    "member",
+    "member_name",
+    "status",
+    "items",
+    "remarks",
+    "total_cents",
+    "over_budget",
+    "budget_acknowledged_at",
+    "submitted_at",
+    "updated_at",
+    "revision",
+    "menu_sha256",
+    "payload_sha256",
+    "last_request_id",
+    "voided_by",
+    "voided_at",
+    "void_reason"
+  ],
+  "fields": [
+    {
+      "fieldname": "round",
+      "label": "工作餐轮次",
+      "fieldtype": "Link",
+      "options": "RG Meal Round",
+      "reqd": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "member",
+      "label": "成员",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "member_name",
+      "label": "成员姓名快照",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "length": 140,
+      "reqd": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "状态",
+      "fieldtype": "Select",
+      "options": "有效\n已作废",
+      "default": "有效",
+      "reqd": 1
+    },
+    {
+      "fieldname": "items",
+      "label": "订单明细",
+      "fieldtype": "Table",
+      "options": "RG Meal Order Item"
+    },
+    {
+      "fieldname": "remarks",
+      "label": "备注",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1
+    },
+    {
+      "fieldname": "total_cents",
+      "label": "合计（分）",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "over_budget",
+      "label": "严格超50元",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "budget_acknowledged_at",
+      "label": "本人超额确认时间",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "submitted_at",
+      "label": "首次提交时间",
+      "fieldtype": "Datetime",
+      "reqd": 1
+    },
+    {
+      "fieldname": "updated_at",
+      "label": "最近修改时间",
+      "fieldtype": "Datetime",
+      "reqd": 1
+    },
+    {
+      "fieldname": "revision",
+      "label": "版本",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "menu_sha256",
+      "label": "冻结菜单 SHA256",
+      "fieldtype": "Data",
+      "length": 64,
+      "reqd": 1
+    },
+    {
+      "fieldname": "payload_sha256",
+      "label": "请求内容 SHA256",
+      "fieldtype": "Data",
+      "length": 64,
+      "reqd": 1
+    },
+    {
+      "fieldname": "last_request_id",
+      "label": "最近请求标识",
+      "fieldtype": "Data",
+      "length": 80,
+      "reqd": 1
+    },
+    {
+      "fieldname": "voided_by",
+      "label": "作废人",
+      "fieldtype": "Link",
+      "options": "User"
+    },
+    {
+      "fieldname": "voided_at",
+      "label": "作废时间",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "void_reason",
+      "label": "作废原因",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "autoname": "hash",
+  "naming_rule": "Random"
+}

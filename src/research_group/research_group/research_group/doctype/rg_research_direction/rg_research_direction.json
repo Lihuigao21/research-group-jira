@@ -1,0 +1,75 @@
+{
+  "doctype": "DocType",
+  "name": "RG Research Direction",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "track_changes": 1,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "title",
+    "goal",
+    "priority",
+    "topics",
+    "revision",
+    "edited_by",
+    "edited_at"
+  ],
+  "fields": [
+    {
+      "fieldname": "title",
+      "label": "方向名称",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 180
+    },
+    {
+      "fieldname": "goal",
+      "label": "组级目标",
+      "fieldtype": "Long Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "priority",
+      "label": "优先级",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "高\n中\n低"
+    },
+    {
+      "fieldname": "topics",
+      "label": "关联课题",
+      "fieldtype": "Table",
+      "read_only": 1,
+      "options": "RG Direction Topic"
+    },
+    {
+      "fieldname": "revision",
+      "label": "版本",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "edited_by",
+      "label": "维护人",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "User"
+    },
+    {
+      "fieldname": "edited_at",
+      "label": "维护时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

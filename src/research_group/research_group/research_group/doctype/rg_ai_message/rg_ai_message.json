@@ -1,0 +1,87 @@
+{
+  "doctype": "DocType",
+  "name": "RG AI Message",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "title_field": "private_user",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "site",
+    "private_user",
+    "conversation",
+    "sequence",
+    "role",
+    "content",
+    "sources",
+    "request_id"
+  ],
+  "fields": [
+    {
+      "fieldname": "site",
+      "label": "site",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "private_user",
+      "label": "private_user",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "search_index": 1
+    },
+    {
+      "fieldname": "conversation",
+      "label": "conversation",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "sequence",
+      "label": "sequence",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "role",
+      "label": "role",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "user\nassistant\ntool"
+    },
+    {
+      "fieldname": "content",
+      "label": "content",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "sources",
+      "label": "sources",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "request_id",
+      "label": "request_id",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 200
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

@@ -1,0 +1,26 @@
+{% extends "templates/web.html" %}
+{% block head_include %}
+<meta name="referrer" content="no-referrer">
+<link rel="stylesheet" href="/assets/research_group/css/rg_join.css">
+{% endblock %}
+{% block page_content %}
+<main class="rg-join" data-signed-in="{{ '1' if rg_signed_in else '0' }}">
+  <a class="rg-join-back" href="/login">返回登录</a>
+  <h1 id="rg-join-title">课题组账号</h1>
+  <p id="rg-join-intro">使用本人复旦官方邮箱申请；邮箱验证后仍需秘书核实入组。</p>
+  <form id="rg-join-form" aria-labelledby="rg-join-title">
+    <div id="rg-join-fields"></div>
+    <button class="btn btn-primary" id="rg-join-submit" type="submit" disabled>正在准备安全表单…</button>
+  </form>
+  <p id="rg-join-status" role="status" aria-live="polite"></p>
+  <nav class="rg-join-links" aria-label="账号入口">
+    <a href="/rg_join">申请入组</a>
+    <a href="/rg_join?mode=reset">找回网站密码</a>
+  </nav>
+  <p class="rg-join-note">请勿输入校园邮箱或 UIS 的密码。登录ID保持为初始邮箱，通知和找回密码发送到已验证联系邮箱。</p>
+  <noscript>此安全表单需要启用 JavaScript 后才能提交。</noscript>
+</main>
+{% endblock %}
+{% block script %}
+<script src="/assets/research_group/js/rg_join.js"></script>
+{% endblock %}

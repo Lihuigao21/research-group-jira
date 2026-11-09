@@ -1,0 +1,133 @@
+name: research-group-jira
+
+x-app: &app
+  image: ${RG_IMAGE:-research-group-jira:0.1.0}
+  pull_policy: never
+  restart: unless-stopped
+  environment: &app-env
+    TZ: Asia/Shanghai
+    SITE_NAME: ${SITE_NAME:-lab.localhost}
+  volumes: &app-volumes
+    - ../runtime/sites:/home/frappe/frappe-bench/sites
+    - ../runtime/logs:/home/frappe/frappe-bench/logs
+    - ../scripts:/opt/research-group-scripts:ro
+
+services:
+  db:
+    image: ${RG_DB_IMAGE:-mariadb:11.8.3}
+    pull_policy: ${RG_DEPENDENCY_PULL_POLICY:-missing}
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --innodb-snapshot-isolation=OFF
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Generate private .env with scripts/create-local-config.py}
+      TZ: Asia/Shanghai
+    volumes:
+      - ../runtime/db:/var/lib/mysql
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+    mem_limit: 2g
+
+  redis-cache:
+    image: ${RG_REDIS_IMAGE:-redis:7.4.2-alpine}
+    pull_policy: ${RG_DEPENDENCY_PULL_POLICY:-missing}
+    restart: unless-stopped
+    command: [redis-server, --maxmemory, 256mb, --maxmemory-policy, allkeys-lru]
+    mem_limit: 384m
+
+  redis-queue:
+    image: ${RG_REDIS_IMAGE:-redis:7.4.2-alpine}
+    pull_policy: ${RG_DEPENDENCY_PULL_POLICY:-missing}
+    restart: unless-stopped
+    command: [redis-server, --appendonly, "yes"]
+    volumes:
+      - ../runtime/redis:/data
+    mem_limit: 512m
+
+  configurator:
+    <<: *app
+    restart: "no"
+    command: [bash, /opt/research-group-scripts/configure.sh]
+    environment:
+      <<: *app-env
+      SITE_NAME: ${SITE_NAME:-lab.localhost}
+    depends_on:
+      db: {condition: service_healthy}
+      redis-cache: {condition: service_started}
+      redis-queue: {condition: service_started}
+
+  initializer:
+    <<: *app
+    profiles: [tools]
+    restart: "no"
+    command: [bash, /opt/research-group-scripts/init-site.sh]
+    environment:
+      <<: *app-env
+      SITE_NAME: ${SITE_NAME:-lab.localhost}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Generate private .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Generate private .env}
+    depends_on:
+      configurator: {condition: service_completed_successfully}
+
+  backend:
+    <<: *app
+    environment:
+      <<: *app-env
+      GUNICORN_WORKERS: "2"
+      GUNICORN_THREADS: "4"
+      GUNICORN_TIMEOUT: "180"
+    depends_on:
+      configurator: {condition: service_completed_successfully}
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS -H "X-Frappe-Site-Name: $${SITE_NAME}" http://localhost:8000/api/method/ping']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    mem_limit: 3g
+
+  websocket:
+    <<: *app
+    command: [node, /home/frappe/frappe-bench/apps/frappe/socketio.js]
+    depends_on:
+      configurator: {condition: service_completed_successfully}
+    mem_limit: 512m
+
+  worker:
+    <<: *app
+    command: [bench, worker, --queue, "short,default,long"]
+    depends_on:
+      configurator: {condition: service_completed_successfully}
+    mem_limit: 1g
+
+  scheduler:
+    <<: *app
+    command: [bench, schedule]
+    depends_on:
+      configurator: {condition: service_completed_successfully}
+    mem_limit: 512m
+
+  frontend:
+    <<: *app
+    command: [nginx-entrypoint.sh]
+    environment:
+      <<: *app-env
+      BACKEND: backend:8000
+      SOCKETIO: websocket:9000
+      FRAPPE_SITE_NAME_HEADER: ${SITE_NAME:-lab.localhost}
+      NGINX_LISTEN_PORT: "8080"
+      CLIENT_MAX_BODY_SIZE: 52m
+      PROXY_READ_TIMEOUT: "180"
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${HTTP_PORT:-8088}:8080"
+    depends_on:
+      - backend
+      - websocket
+    mem_limit: 256m
+

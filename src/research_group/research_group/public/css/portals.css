@@ -1,0 +1,75 @@
+.rg-portal { max-width: 1120px; margin: 0 auto; padding: 20px 12px 48px; color: var(--text-color, #252b34); }
+.rg-portal * { box-sizing: border-box; }
+.rg-portal ::selection { background: #d6e8fb; color: #18344d; }
+.rg-portal :focus-visible { outline: 2px solid var(--primary, #2876bd); outline-offset: 3px; }
+.rg-portal input, .rg-portal textarea, .rg-portal select { caret-color: var(--primary, #2876bd); }
+.rg-portal-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.rg-portal-header h2 { margin: 0 0 8px; font-size: 24px; font-weight: 650; line-height: 1.35; }
+.rg-portal-header p, .rg-portal-note { color: var(--text-muted, #596775); margin: 0; line-height: 1.65; }
+.rg-portal-role { width: auto; min-width: 136px; max-width: 100%; }
+.rg-portal-section { border-top: 1px solid var(--border-color, #d9e0e7); padding-top: 22px; margin-top: 28px; }
+.rg-portal-section h3 { font-size: 18px; font-weight: 650; margin: 0 0 16px; }
+.rg-portal-section h4 { font-size: 16px; font-weight: 600; margin: 20px 0 10px; }
+.rg-portal-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; max-width: 75ch; }
+.rg-portal-links { display: flex; flex-wrap: wrap; gap: 8px 20px; padding: 10px 0; }
+.rg-portal-links a { padding: 9px 0; text-underline-offset: 4px; }
+.rg-portal-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 24px; }
+.rg-portal-tabs .btn { min-height: 38px; }
+.rg-portal-stack { display: flex; flex-direction: column; gap: 16px; }
+.rg-portal-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.rg-portal-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; margin-bottom: 15px; }
+.rg-portal-field label { font-size: 13px; font-weight: 600; margin: 0; }
+.rg-portal-field textarea { min-height: 100px; resize: vertical; line-height: 1.6; }
+.rg-portal-actions { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; margin-top: 16px; }
+.rg-portal-actions .btn { min-height: 38px; white-space: normal; }
+.rg-portal-empty { padding: 22px 0; color: var(--text-muted, #596775); line-height: 1.7; }
+.rg-portal-error { color: var(--red-600, #a93032); white-space: pre-wrap; overflow-wrap: anywhere; margin: 14px 0; }
+.rg-portal-status { display: block; min-height: 22px; margin: 12px 0; color: var(--text-muted, #596775); overflow-wrap: anywhere; }
+.rg-portal-list { margin: 0; padding: 0; list-style: none; }
+.rg-portal-list > li { border-bottom: 1px solid var(--border-color, #d9e0e7); padding: 16px 0; min-width: 0; }
+.rg-portal-list > li:last-child { border-bottom: 0; }
+.rg-portal-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.rg-portal-row > * { min-width: 0; }
+.rg-portal-meta { font-size: 12px; color: var(--text-muted, #596775); overflow-wrap: anywhere; margin: 6px 0; line-height: 1.6; }
+.rg-portal-table { max-width: 100%; overflow-x: auto; border: 1px solid var(--border-color, #d9e0e7); border-radius: 6px; }
+.rg-portal-table table { width: 100%; min-width: 480px; margin-bottom: 0; }
+.rg-portal-table td, .rg-portal-table th { padding: 10px 12px; vertical-align: top; white-space: normal; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.rg-portal-recipient { display: flex; gap: 10px; padding: 10px 0; align-items: flex-start; }
+.rg-portal-recipient input { margin-top: 5px; }
+.rg-portal-check { display: flex; gap: 9px; align-items: flex-start; line-height: 1.65; margin-top: 12px; }
+.rg-portal-check input { margin-top: 5px; flex-shrink: 0; }
+.rg-portal-preview { background: var(--subtle-fg, #f5f7f9); padding: 18px; border-radius: 6px; }
+.rg-portal-nav-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-bottom: 10px; }
+.rg-portal-nav-row .btn { padding: 5px 10px; }
+.rg-meal-menu { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
+.rg-meal-item { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 15px; padding: 20px 0; border-bottom: 1px solid var(--border-color, #d9e0e7); align-items: start; }
+.rg-meal-item img { width: 112px; height: 112px; object-fit: cover; border-radius: 6px; }
+.rg-meal-addon { grid-template-columns: minmax(0, 1fr); }
+.rg-meal-item h4 { margin: 0 0 5px; line-height: 1.45; }
+.rg-meal-item .rg-portal-text { font-size: 13px; }
+.rg-meal-quantity { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 9px; margin-top: 12px; }
+.rg-meal-quantity .form-control { min-width: 0; }
+.rg-meal-total { font-weight: 650; font-size: 20px; font-variant-numeric: tabular-nums; }
+.rg-manuscript-paragraph { max-height: 350px; overflow-y: auto; }
+.rg-portal * { scrollbar-color: var(--gray-400, #a7b2bf) var(--subtle-fg, #f5f7f9); scrollbar-width: thin; }
+.rg-portal .btn:hover:not(:disabled) { filter: brightness(.96); }
+.rg-portal .btn:disabled { cursor: wait; }
+.rg-portal a:hover { text-decoration-thickness: 2px; }
+.rg-portal input[type="file"] { max-width: 100%; height: auto; white-space: normal; }
+.rg-manuscript-paragraph button { display: block; text-align: left; width: 100%; padding: 12px 0; border: 0; border-bottom: 1px solid var(--border-color, #d9e0e7); background: transparent; color: inherit; white-space: pre-wrap; line-height: 1.7; }
+@media (max-width: 700px) {
+  .rg-portal { padding: 14px 4px 36px; }
+  .rg-portal-grid, .rg-meal-menu { grid-template-columns: minmax(0, 1fr); }
+  .rg-portal-header { flex-direction: column; gap: 12px; }
+  .rg-portal-role { width: 100%; }
+  .rg-portal-row { flex-direction: column; gap: 8px; }
+  .rg-portal-header h2 { font-size: 22px; }
+  .rg-portal-nav-row { grid-template-columns: 20px minmax(0, 1fr); }
+  .rg-portal-nav-row > div { grid-column: 2; }
+}
+@media (max-width: 360px) {
+  .rg-meal-item { grid-template-columns: 82px minmax(0, 1fr); gap: 10px; }
+  .rg-meal-addon { grid-template-columns: minmax(0, 1fr); }
+  .rg-meal-item img { width: 82px; height: 94px; }
+  .rg-meal-quantity { grid-template-columns: minmax(0, 1fr); }
+}

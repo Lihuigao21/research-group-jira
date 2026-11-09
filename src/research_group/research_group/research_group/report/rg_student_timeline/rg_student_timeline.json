@@ -1,0 +1,20 @@
+{
+  "doctype": "Report",
+  "name": "RG Student Timeline",
+  "report_name": "RG Student Timeline",
+  "report_type": "Script Report",
+  "ref_doctype": "RG Progress",
+  "module": "Research Group",
+  "is_standard": "Yes",
+  "disabled": 0,
+  "prepared_report": 0,
+  "add_total_row": 0,
+  "roles": [
+    {
+      "role": "课题组教师"
+    },
+    {
+      "role": "课题组学生"
+    }
+  ]
+}

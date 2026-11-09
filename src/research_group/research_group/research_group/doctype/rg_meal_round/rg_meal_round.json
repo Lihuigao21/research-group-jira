@@ -1,0 +1,112 @@
+{
+  "doctype": "DocType",
+  "name": "RG Meal Round",
+  "module": "Research Group",
+  "custom": 0,
+  "engine": "InnoDB",
+  "istable": 0,
+  "track_changes": 0,
+  "allow_rename": 0,
+  "field_order": [
+    "title",
+    "meeting",
+    "status",
+    "deadline",
+    "revision",
+    "publisher",
+    "published_at",
+    "closed_at",
+    "menu_version",
+    "items",
+    "menu_snapshot",
+    "menu_sha256"
+  ],
+  "fields": [
+    {
+      "fieldname": "title",
+      "label": "标题",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "length": 200,
+      "reqd": 1
+    },
+    {
+      "fieldname": "meeting",
+      "label": "关联组会",
+      "fieldtype": "Link",
+      "options": "RG Group Meeting"
+    },
+    {
+      "fieldname": "status",
+      "label": "状态",
+      "fieldtype": "Select",
+      "options": "草稿\n已发布\n已关闭",
+      "default": "草稿",
+      "reqd": 1
+    },
+    {
+      "fieldname": "deadline",
+      "label": "截止时间（上海）",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "revision",
+      "label": "版本",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "publisher",
+      "label": "创建人",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1
+    },
+    {
+      "fieldname": "published_at",
+      "label": "发布时间",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "closed_at",
+      "label": "关闭时间",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "menu_version",
+      "label": "菜单版本",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "length": 80,
+      "reqd": 1
+    },
+    {
+      "fieldname": "items",
+      "label": "菜单",
+      "fieldtype": "Table",
+      "options": "RG Meal Item"
+    },
+    {
+      "fieldname": "menu_snapshot",
+      "label": "冻结菜单",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1
+    },
+    {
+      "fieldname": "menu_sha256",
+      "label": "菜单 SHA256",
+      "fieldtype": "Data",
+      "length": 64
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "autoname": "hash",
+  "naming_rule": "Random"
+}

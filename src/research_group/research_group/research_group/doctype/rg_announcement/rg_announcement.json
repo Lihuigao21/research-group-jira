@@ -1,0 +1,75 @@
+{
+  "doctype": "DocType",
+  "name": "RG Announcement",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "track_changes": 1,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "title",
+    "body",
+    "audience",
+    "status",
+    "revision",
+    "publisher",
+    "published_at"
+  ],
+  "fields": [
+    {
+      "fieldname": "title",
+      "label": "标题",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 180
+    },
+    {
+      "fieldname": "body",
+      "label": "公告正文",
+      "fieldtype": "Long Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "audience",
+      "label": "可见范围",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "all\nteacher\nsecretary\nstudent"
+    },
+    {
+      "fieldname": "status",
+      "label": "状态",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "draft\npublished\noffline"
+    },
+    {
+      "fieldname": "revision",
+      "label": "版本",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "publisher",
+      "label": "发布人",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "User"
+    },
+    {
+      "fieldname": "published_at",
+      "label": "发布时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

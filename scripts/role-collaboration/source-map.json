@@ -1,0 +1,267 @@
+{
+  "schema": 1,
+  "work_sources_modified": false,
+  "copies": [
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/role_http.py",
+      "source_sha256": "b74d16c56902d213e95af7249e521f4abdd1a20541357f6be98b096e1ed52c06",
+      "source_bytes": 5270,
+      "destination": "scripts/role-collaboration/role_http.py",
+      "destination_sha256": "b65cb7965c7acc5f0662be75edbf2583beba4d2f1e534f6b3f65ce0839aef6ee",
+      "destination_bytes": 4995,
+      "changes": [
+        "UTF-8 LF source serialization",
+        "Explicit current-task/attempt context and credential path",
+        "Loopback-only paths and same-origin redirects",
+        "Exclusive attempt-scoped receipt writer"
+      ]
+    },
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/accounts-http-fixture.py",
+      "source_sha256": "80b3af770bda30808aa3632826554e8d19570365a410f8c6fc89dd799679c169",
+      "source_bytes": 18819,
+      "destination": "scripts/role-collaboration/accounts-http-fixture.py",
+      "destination_sha256": "8af936d3e62fb07415efcfcf97d79ff8ab50ea492f2bcea8202fa54e63e19778",
+      "destination_bytes": 27172,
+      "changes": [
+        "Unmodified private-pipe candidate fixture; raw bytes retained",
+        "Synchronized final native email-link/cachekey/sidtoken v1/v2 rejection and private KV cleanup assertions",
+        "Review loop 1 adds entry-level regression assertions; all earlier assertions retained"
+      ]
+    },
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/verify-accounts-http.py",
+      "source_sha256": "647f623e4fe6f9651f4db15afcfdb8a2cc68cb4ae22f08e233f700d5908b7feb",
+      "source_bytes": 34987,
+      "destination": "scripts/role-collaboration/verify-accounts-http.py",
+      "destination_sha256": "c68132473828c6f43a7be400671a05aba76b3886a294aee649045883a090dfd9",
+      "destination_bytes": 43091,
+      "changes": [
+        "UTF-8 LF source serialization",
+        "CLI identity from shared runner; private fixture sibling path",
+        "Three fresh random strong test passwords per process",
+        "Preserved native-session protocol and assertions; exclusive receipt",
+        "Synchronized final native email-link/cachekey/sidtoken v1/v2 rejection and private KV cleanup assertions",
+        "Review loop 1 adds entry-level regression assertions; all earlier assertions retained"
+      ]
+    },
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/prepare_role_fixtures.py",
+      "source_sha256": "7b0645fdc0c55d5adf91a0295e5ee2ac656684c5269b29c77c53f850c9a02dd9",
+      "source_bytes": 2256,
+      "destination": "scripts/role-collaboration/prepare-fixtures.py",
+      "destination_sha256": "0fba7ae84b5e15116073170b06be010b0b47e2e0d7c001c00d83bad8efc8cc6c",
+      "destination_bytes": 2519,
+      "changes": [
+        "UTF-8 LF source serialization",
+        "Site/base supplied by admitted current context",
+        "Returned safe proof instead of import-time execution",
+        "Review loop 1 adds entry-level regression assertions; all earlier assertions retained"
+      ]
+    },
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/verify-portals-http.py",
+      "source_sha256": "1fcbacfe528c9c0a66800aff6ac0827eedf960fe7497fdb477a8417afae50421",
+      "source_bytes": 20334,
+      "destination": "scripts/role-collaboration/verify-portals-http.py",
+      "destination_sha256": "1830b4caa49f9ffc685b346612af24e0e2ed2c82f481fceba1acb6e995cb6de5",
+      "destination_bytes": 22155,
+      "changes": [
+        "UTF-8 LF source serialization",
+        "Explicit current task/base/attempt receipt; unchanged portal assertions/cleanup",
+        "Review loop 1 adds entry-level regression assertions; all earlier assertions retained"
+      ]
+    },
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/verify-notifications-http.py",
+      "source_sha256": "2b385078122a57f009e5888a97e01e4b739284837f37b775d851e7876d9a5cbb",
+      "source_bytes": 18090,
+      "destination": "scripts/role-collaboration/verify-notifications-http.py",
+      "destination_sha256": "705f64b62712837a79b5372a4f1593bd951a186d4536bda0f5fbf0d019a30ec0",
+      "destination_bytes": 17775,
+      "changes": [
+        "UTF-8 LF source serialization",
+        "Shared validated loopback context and attempt-scoped receipt",
+        "All mail preview/confirmation and literal-text assertions retained"
+      ]
+    },
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/verify-meals-http.py",
+      "source_sha256": "127705ed18bb356ac7f4c611d963778474608cc538170862501e4dae88a96629",
+      "source_bytes": 9901,
+      "destination": "scripts/role-collaboration/verify-meals-http.py",
+      "destination_sha256": "a7193c42b9721e8ebafc07e9c45f0e88a7118736ac08c632564357595505ed2c",
+      "destination_bytes": 9749,
+      "changes": [
+        "UTF-8 LF source serialization",
+        "Shared current context; callable main; error class only",
+        "All pricing/export/request identity assertions retained"
+      ]
+    },
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/verify-manuscripts-http.py",
+      "source_sha256": "37a71433b71a67900790a5bb5cb09ac6884bd960dd08df7f19760ca76855ac12",
+      "source_bytes": 37739,
+      "destination": "scripts/role-collaboration/verify-manuscripts-http.py",
+      "destination_sha256": "990daf9ea02e5b4a495bcc5acb84dc67c845da35c9b0910509b7cde1387a1faf",
+      "destination_bytes": 40686,
+      "changes": [
+        "UTF-8 LF source serialization",
+        "Explicit private credential/current attempt receipt paths",
+        "All literal DOCX and confirmed AI assertions retained",
+        "Review loop 1 adds entry-level regression assertions; all earlier assertions retained"
+      ]
+    },
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/verify-realtime-http.py",
+      "source_sha256": "063c94fd3e28478c6477ff2527f0c56ba484c69cbea550c582e60d11d850a518",
+      "source_bytes": 1741,
+      "destination": "scripts/role-collaboration/verify-realtime-http.py",
+      "destination_sha256": "5a75150067afaf59d07934f7ac69d8a2d6bdbbcbe01b93810a6fc0546e73dc5c",
+      "destination_bytes": 1840,
+      "changes": [
+        "UTF-8 LF source serialization",
+        "Configured site and unique attempt receipt; callable main"
+      ]
+    },
+    {
+      "source": "tasks/20261107-ai-assistant/work/verify_ai_http.py",
+      "source_sha256": "095cac0407d1b19ad24094059b2c86c1d3fecfaa6ee0e0b7232a5db38211862d",
+      "source_bytes": 11460,
+      "destination": "scripts/role-collaboration/legacy-ai-source.py",
+      "destination_sha256": "095cac0407d1b19ad24094059b2c86c1d3fecfaa6ee0e0b7232a5db38211862d",
+      "destination_bytes": 11460,
+      "changes": [
+        "Read-only historical assertion source; wrapper adapts only run identity, explicit credentials, wrong-origin target and station prompt"
+      ]
+    },
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/run-legacy-http.py",
+      "source_sha256": "7455bff9aa2b761d40b91312fbaf36a39ce83d84ba89ae3c962c2b37cec7d96d",
+      "source_bytes": 3352,
+      "destination": "scripts/role-collaboration/run-legacy-http.py",
+      "destination_sha256": "e0f0fb0b7013ade99a964c126a76cab72c186579e776b3b2a40db356a2d6a99b",
+      "destination_bytes": 5495,
+      "changes": [
+        "Wrapper rewritten for explicit context and private credentials",
+        "Old core/surveys files are read-only and unchanged",
+        "Legacy AI copied input is adapted in memory; raw historical output entry is never invoked",
+        "Candidate-only native temporary-file probe; current task scratch paths; sanitized errors"
+      ]
+    },
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/verify-native-envelope-http.py",
+      "source_sha256": "eccfaecd8f4f3de9be97e135194e51e13a438ee216903512ff6d4b06148074d0",
+      "source_bytes": 3532,
+      "destination": "scripts/role-collaboration/verify-native-envelope-http.py",
+      "destination_sha256": "efaf13291661904087a70ab35562a5e8b3099512cb5c2558ee2095db9e37cb91",
+      "destination_bytes": 3428,
+      "changes": [
+        "UTF-8 LF source serialization",
+        "Callable main using the admitted task and unique attempt receipt",
+        "Error class only; original large legal survey and native-envelope assertions unchanged"
+      ]
+    }
+  ],
+  "new_files": [
+    {
+      "path": "scripts/verify-role-http.py",
+      "sha256": "baf5217f59828f9457079bfc86d2e770db4eeeae99023427828b375f145f7be7",
+      "bytes": 5622
+    },
+    {
+      "path": "scripts/role-collaboration/acceptance_config.py",
+      "sha256": "7fedbedb2c21d75b0bad8466b24c421f378bc9c97bb6f43f66a773601463356a",
+      "bytes": 9112
+    },
+    {
+      "path": "scripts/role-collaboration/README.md",
+      "sha256": "e73b93d54db05c2b70f185626e92cb68f517aef9aaa7141499187e6eba7b4ce2",
+      "bytes": 3897
+    }
+  ],
+  "adaptations": [
+    {
+      "source": "tasks/20261108-fdu-accounts-meals/work/ipv4_entry.py",
+      "source_sha256": "97aa60ae166590ef5d0bf65e6bd93d43fc28c15190aff6347c34a1d65443930a",
+      "source_bytes": 695,
+      "destination": "scripts/role-collaboration/acceptance_config.py",
+      "changes": [
+        "Same stable AF_INET-first sorting only for host == localhost",
+        "Installed idempotently after validated CLI configuration; no URL/Host/Origin/cookie rewrite",
+        "Other hosts and IPv6 results retained; no actual DNS or HTTP used for static admission"
+      ]
+    }
+  ],
+  "promotion_history": [
+    {
+      "event": "native-email-link-final-account-sync",
+      "previous_bindings": [
+        {
+          "source": "tasks/20261108-fdu-accounts-meals/work/accounts-http-fixture.py",
+          "source_sha256": "5904c249b5d01d73ae36253db1f4290c7b3d6cab031581171b07fe1bb0c9c0c5",
+          "source_bytes": 16771,
+          "destination": "scripts/role-collaboration/accounts-http-fixture.py",
+          "destination_sha256": "5904c249b5d01d73ae36253db1f4290c7b3d6cab031581171b07fe1bb0c9c0c5",
+          "destination_bytes": 16771,
+          "changes": [
+            "Unmodified private-pipe candidate fixture; raw bytes retained",
+            "Synchronized final native email-link/cachekey/sidtoken v1/v2 rejection and private KV cleanup assertions"
+          ],
+          "archived_destination": "tasks/20261108-fdu-accounts-meals/inputs/http-entry-before-native-link-sync/accounts-http-fixture.py"
+        },
+        {
+          "source": "tasks/20261108-fdu-accounts-meals/work/verify-accounts-http.py",
+          "source_sha256": "59788c6a2e59c9917ba81917c2ddc8ba320bd4a5444c1a3241d75dcd5d66bac2",
+          "source_bytes": 31025,
+          "destination": "scripts/role-collaboration/verify-accounts-http.py",
+          "destination_sha256": "7ebde2188d5ee8ceb2daef8354ca5a0902bc9e666394cede866d2f8d42210358",
+          "destination_bytes": 29367,
+          "changes": [
+            "UTF-8 LF source serialization",
+            "CLI identity from shared runner; private fixture sibling path",
+            "Three fresh random strong test passwords per process",
+            "Preserved native-session protocol and assertions; exclusive receipt",
+            "Synchronized final native email-link/cachekey/sidtoken v1/v2 rejection and private KV cleanup assertions"
+          ],
+          "archived_destination": "tasks/20261108-fdu-accounts-meals/inputs/http-entry-before-native-link-sync/verify-accounts-http.py"
+        }
+      ],
+      "previous_source_map": "tasks/20261108-fdu-accounts-meals/inputs/http-entry-before-native-link-sync/source-map.json"
+    },
+    {
+      "event": "review-loop-1-role-collaboration-corrections",
+      "previous_source_map": "tasks/20261108-fdu-accounts-meals/work/review-loop-1/keep/scripts/role-collaboration/source-map.json",
+      "previous_source_map_sha256": "b72d94dd31430f0e90288df97042a860824e7c1cead3852a2d367632a6e5cf1f",
+      "changed_destinations": [
+        "scripts/role-collaboration/accounts-http-fixture.py",
+        "scripts/role-collaboration/prepare-fixtures.py",
+        "scripts/role-collaboration/verify-accounts-http.py",
+        "scripts/role-collaboration/verify-manuscripts-http.py",
+        "scripts/role-collaboration/verify-portals-http.py"
+      ]
+    }
+  ],
+  "account_app_dependencies": [
+    {
+      "path": "src/research_group/research_group/accounts.py",
+      "sha256": "ca4f8a50b36782348aa2df55bbfeaa73536f7a1360f9919e79dbf0bc140fef65",
+      "bytes": 48393
+    },
+    {
+      "path": "src/research_group/research_group/hooks.py",
+      "sha256": "d45ff68810d4db3f6b543eab7ab7f69ce3cd5b5f69af96c52f3046115c19b4e0",
+      "bytes": 5895
+    },
+    {
+      "path": "src/research_group/research_group/setup.py",
+      "sha256": "89ef7e0d7f77e7c41773a0a215638a3964f77062f811ee65d0ea4ee68922c4f1",
+      "bytes": 6231
+    },
+    {
+      "path": "src/research_group/research_group/tests/test_accounts.py",
+      "sha256": "b823913025a7b6794dd5b1f5f978560373a45c2749243e1c8ed2e6b762543cbf",
+      "bytes": 45847
+    }
+  ]
+}

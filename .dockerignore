@@ -1,0 +1,12 @@
+.git
+_bmad
+.agents
+_bmad-output
+runtime
+tasks
+records
+**/__pycache__
+**/*.pyc
+**/.env
+**/node_modules
+

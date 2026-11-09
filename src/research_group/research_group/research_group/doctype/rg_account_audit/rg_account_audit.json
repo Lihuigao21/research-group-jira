@@ -1,0 +1,72 @@
+{
+  "doctype": "DocType",
+  "name": "RG Account Audit",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "title_field": "action",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "actor",
+    "action",
+    "target_user",
+    "registration",
+    "detail",
+    "occurred_at"
+  ],
+  "fields": [
+    {
+      "fieldname": "actor",
+      "label": "操作者",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "User",
+      "reqd": 1
+    },
+    {
+      "fieldname": "action",
+      "label": "操作",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 80,
+      "reqd": 1
+    },
+    {
+      "fieldname": "target_user",
+      "label": "目标身份",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "User"
+    },
+    {
+      "fieldname": "registration",
+      "label": "入组申请",
+      "fieldtype": "Link",
+      "read_only": 1,
+      "options": "RG Registration"
+    },
+    {
+      "fieldname": "detail",
+      "label": "说明",
+      "fieldtype": "Long Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "occurred_at",
+      "label": "时间",
+      "fieldtype": "Datetime",
+      "read_only": 1,
+      "reqd": 1
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

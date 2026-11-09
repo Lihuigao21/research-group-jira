@@ -1,0 +1,10 @@
+.rg-join {max-width: 32rem; margin: 3rem auto; padding: 1.5rem; overflow-wrap: anywhere;}
+.rg-join h1 {font-size: 1.75rem; margin: 1.5rem 0 1rem;}
+.rg-join label {display: block; margin: 1.1rem 0 .4rem; font-weight: 600;}
+.rg-join input {display: block; width: 100%; min-width: 0;}
+.rg-join button {margin-top: 1.5rem; min-height: 2.75rem; white-space: normal;}
+.rg-join-links {display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem;}
+.rg-join-note {font-size: .875rem; color: var(--text-muted, #525b65); margin-top: 1.5rem;}
+#rg-join-status {min-height: 1.5rem; margin-top: 1rem; white-space: pre-wrap;}
+#rg-join-status[data-error="1"] {color: var(--red-700, #a52222);}
+@media (max-width: 390px) {.rg-join {margin: 1rem auto; padding: 1rem;} .rg-join button {width: 100%;}}

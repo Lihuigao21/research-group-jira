@@ -1,0 +1,10 @@
+# 验收回执保留原始字节；Windows CRLF 不当作 JSON 尾随空白。
+tasks/**/records/**/*.json -text whitespace=cr-at-eol
+# 原始终端日志可含进度回车、尾随空白与结束空行，不作源码格式化。
+tasks/**/records/**/*.log -text -whitespace
+# 此文件是本轮原始终端状态字节，保留 CRCRLF；不作为源码格式化。
+tasks/20261108-fdu-accounts-meals/records/initial-git-status.txt -text -whitespace
+
+# Snapshot import preserves validated legacy source bytes.
+* whitespace=-blank-at-eof
+src/research_group/research_group/tests/fixtures/provenance.json -text whitespace=cr-at-eol,-blank-at-eof

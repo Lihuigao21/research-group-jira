@@ -1,0 +1,113 @@
+{
+  "doctype": "DocType",
+  "name": "RG Meeting Report",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "format:RG-RPT-{#####}",
+  "naming_rule": "Expression",
+  "engine": "InnoDB",
+  "title_field": "meeting",
+  "track_changes": 1,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "meeting",
+    "student",
+    "topic",
+    "latest_version",
+    "last_submitted_at",
+    "late",
+    "history"
+  ],
+  "fields": [
+    {
+      "fieldname": "meeting",
+      "label": "组会",
+      "fieldtype": "Link",
+      "options": "RG Group Meeting",
+      "reqd": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "student",
+      "label": "报告学生",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "topic",
+      "label": "报告主题",
+      "fieldtype": "Data",
+      "length": 200,
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "latest_version",
+      "label": "已提交版本数",
+      "fieldtype": "Int",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "last_submitted_at",
+      "label": "最近提交时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "late",
+      "label": "最近版本迟交",
+      "fieldtype": "Check",
+      "read_only": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "history",
+      "label": "材料版本",
+      "fieldtype": "HTML"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "课题组教师",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 1,
+      "write": 1
+    },
+    {
+      "role": "课题组秘书",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 1,
+      "write": 1
+    },
+    {
+      "role": "课题组学生",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 0,
+      "write": 0
+    }
+  ],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "protect_attached_files": 1,
+  "show_name_in_global_search": 1
+}

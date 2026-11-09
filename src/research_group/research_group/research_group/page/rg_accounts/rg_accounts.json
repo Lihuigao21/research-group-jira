@@ -1,0 +1,20 @@
+{
+  "doctype": "Page",
+  "name": "rg-accounts",
+  "page_name": "rg-accounts",
+  "title": "我的账号与组员管理",
+  "module": "Research Group",
+  "standard": "Yes",
+  "system_page": 0,
+  "roles": [
+    {
+      "role": "课题组教师"
+    },
+    {
+      "role": "课题组秘书"
+    },
+    {
+      "role": "课题组学生"
+    }
+  ]
+}

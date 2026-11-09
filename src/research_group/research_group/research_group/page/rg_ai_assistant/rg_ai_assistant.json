@@ -1,0 +1,14 @@
+{
+  "doctype": "Page",
+  "name": "rg-ai-assistant",
+  "page_name": "rg-ai-assistant",
+  "title": "我的 AI 助手",
+  "module": "Research Group",
+  "standard": "Yes",
+  "system_page": 0,
+  "roles": [
+    {"role": "课题组教师"},
+    {"role": "课题组学生"},
+    {"role": "课题组秘书"}
+  ]
+}

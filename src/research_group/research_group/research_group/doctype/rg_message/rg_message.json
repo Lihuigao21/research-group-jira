@@ -1,0 +1,127 @@
+{
+  "doctype": "DocType",
+  "name": "RG Message",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "hash",
+  "engine": "InnoDB",
+  "title_field": "subject",
+  "track_changes": 0,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "site",
+    "actor",
+    "subject",
+    "body",
+    "kind",
+    "selector_json",
+    "recipients_json",
+    "confirmation_digest",
+    "authorization_version",
+    "status",
+    "expires_at",
+    "published_at",
+    "from_address"
+  ],
+  "fields": [
+    {
+      "fieldname": "site",
+      "label": "site",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140
+    },
+    {
+      "fieldname": "actor",
+      "label": "actor",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 140,
+      "search_index": 1
+    },
+    {
+      "fieldname": "subject",
+      "label": "subject",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "read_only": 1,
+      "length": 200
+    },
+    {
+      "fieldname": "body",
+      "label": "body",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "kind",
+      "label": "kind",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "important\nmeeting\ndiscussion\nactivity"
+    },
+    {
+      "fieldname": "selector_json",
+      "label": "selector_json",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "recipients_json",
+      "label": "recipients_json",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "confirmation_digest",
+      "label": "confirmation_digest",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 64
+    },
+    {
+      "fieldname": "authorization_version",
+      "label": "authorization_version",
+      "fieldtype": "Int",
+      "read_only": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "status",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "preview\npublished",
+      "search_index": 1
+    },
+    {
+      "fieldname": "expires_at",
+      "label": "expires_at",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "published_at",
+      "label": "published_at",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "from_address",
+      "label": "from_address",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 254
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1
+}

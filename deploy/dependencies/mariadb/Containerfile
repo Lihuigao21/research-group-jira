@@ -1,0 +1,43 @@
+FROM python:3.14-slim-trixie@sha256:af8a5aa14780025dbfbcfbc81bd8a91ebd87711dd5b0f48ed71090949dd7cb1d
+
+ARG MARIADB_DEB_VERSION=1:11.8.6-0+deb13u1
+LABEL org.opencontainers.image.title="Research Group MariaDB Debian fallback" \
+      org.opencontainers.image.version="11.8.6-debian13" \
+      org.opencontainers.image.description="Locally built Debian packages; not the Docker Official MariaDB image"
+
+COPY deploy/dependencies/debian.sources /etc/apt/sources.list.d/debian.sources
+RUN printf '#!/bin/sh\nexit 101\n' > /usr/sbin/policy-rc.d \
+    && chmod 755 /usr/sbin/policy-rc.d \
+    && apt-get -o APT::Update::Error-Mode=any -o Acquire::Retries=3 update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+       "mariadb-server=${MARIADB_DEB_VERSION}" \
+       "mariadb-server-core=${MARIADB_DEB_VERSION}" \
+       "mariadb-client=${MARIADB_DEB_VERSION}" \
+       "mariadb-client-core=${MARIADB_DEB_VERSION}" \
+       "mariadb-common=${MARIADB_DEB_VERSION}" \
+       "mariadb-backup=${MARIADB_DEB_VERSION}" \
+       ca-certificates gosu pwgen tzdata xz-utils zstd \
+    && test "$(dpkg-query -W -f='${Version}' mariadb-server)" = "${MARIADB_DEB_VERSION}" \
+    && rm -rf /var/lib/apt/lists/* /var/lib/mysql \
+    && mkdir -p /var/lib/mysql /run/mysqld /docker-entrypoint-initdb.d /usr/local/share/research-group-dependencies \
+    && chown mysql:mysql /var/lib/mysql /run/mysqld \
+    && chmod 1777 /run/mysqld \
+    && dpkg-query -W > /usr/local/share/research-group-dependencies/packages.txt
+
+COPY deploy/dependencies/mariadb/vendor/ /usr/local/share/research-group-dependencies/mariadb-vendor/
+COPY deploy/dependencies/mariadb/prepare-entrypoint.py /usr/local/share/research-group-dependencies/prepare-entrypoint.py
+COPY deploy/dependencies/mariadb/99-container.cnf /etc/mysql/mariadb.conf.d/99-container.cnf
+RUN python /usr/local/share/research-group-dependencies/prepare-entrypoint.py \
+       /usr/local/share/research-group-dependencies/mariadb-vendor/docker-entrypoint.sh \
+       /usr/local/bin/docker-entrypoint.sh "${MARIADB_DEB_VERSION}" \
+    && install -m 755 /usr/local/share/research-group-dependencies/mariadb-vendor/healthcheck.sh /usr/local/bin/healthcheck.sh \
+    && chmod 755 /usr/local/bin/docker-entrypoint.sh \
+    && bash -n /usr/local/bin/docker-entrypoint.sh \
+    && bash -n /usr/local/bin/healthcheck.sh \
+    && mariadbd --version > /usr/local/share/research-group-dependencies/server-version.txt
+
+ENV LANG=C.UTF-8
+EXPOSE 3306
+HEALTHCHECK --interval=5s --timeout=5s --retries=24 CMD ["healthcheck.sh", "--connect", "--innodb_initialized"]
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["mariadbd"]

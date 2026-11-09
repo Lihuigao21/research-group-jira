@@ -1,0 +1,89 @@
+{
+  "doctype": "DocType",
+  "name": "RG Member",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "field:user",
+  "naming_rule": "By fieldname",
+  "engine": "InnoDB",
+  "title_field": "display_name",
+  "track_changes": 1,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "user",
+    "display_name",
+    "active",
+    "is_demo"
+  ],
+  "fields": [
+    {
+      "fieldname": "user",
+      "label": "登录账号",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "display_name",
+      "label": "姓名",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "active",
+      "label": "启用",
+      "fieldtype": "Check",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "is_demo",
+      "label": "虚构演示成员",
+      "fieldtype": "Check",
+      "default": "0",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "课题组教师",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 0,
+      "write": 0
+    },
+    {
+      "role": "课题组学生",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 0,
+      "write": 0
+    },
+    {
+      "role": "课题组秘书",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 0,
+      "write": 0
+    }
+  ],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "protect_attached_files": 1,
+  "show_name_in_global_search": 1
+}

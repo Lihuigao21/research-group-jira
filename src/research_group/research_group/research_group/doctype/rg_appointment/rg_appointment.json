@@ -1,0 +1,129 @@
+{
+  "doctype": "DocType",
+  "name": "RG Appointment",
+  "module": "Research Group",
+  "custom": 0,
+  "autoname": "format:RG-APT-{#####}",
+  "naming_rule": "Expression",
+  "engine": "InnoDB",
+  "title_field": "agenda",
+  "track_changes": 1,
+  "allow_rename": 0,
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "field_order": [
+    "topic",
+    "student",
+    "teacher",
+    "start_at",
+    "end_at",
+    "agenda",
+    "status",
+    "decision_note",
+    "decided_at",
+    "archived_at"
+  ],
+  "fields": [
+    {
+      "fieldname": "topic",
+      "label": "课题",
+      "fieldtype": "Link",
+      "options": "RG Topic",
+      "reqd": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "student",
+      "label": "申请学生",
+      "fieldtype": "Link",
+      "options": "User",
+      "read_only": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "teacher",
+      "label": "指定教师",
+      "fieldtype": "Link",
+      "options": "User",
+      "reqd": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "start_at",
+      "label": "开始时间",
+      "fieldtype": "Datetime",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "end_at",
+      "label": "结束时间",
+      "fieldtype": "Datetime",
+      "reqd": 1
+    },
+    {
+      "fieldname": "agenda",
+      "label": "讨论议题",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "申请状态",
+      "fieldtype": "Select",
+      "options": "待审批\n已批准\n已拒绝\n已取消\n已归档",
+      "default": "待审批",
+      "read_only": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "decision_note",
+      "label": "处理说明",
+      "fieldtype": "Small Text",
+      "read_only": 1
+    },
+    {
+      "fieldname": "decided_at",
+      "label": "处理时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "archived_at",
+      "label": "归档时间",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "课题组教师",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 0,
+      "write": 1
+    },
+    {
+      "role": "课题组学生",
+      "read": 1,
+      "select": 1,
+      "report": 1,
+      "print": 1,
+      "export": 1,
+      "create": 1,
+      "write": 1
+    }
+  ],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "protect_attached_files": 1,
+  "show_name_in_global_search": 1
+}

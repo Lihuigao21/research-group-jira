@@ -1,0 +1,13 @@
+.rg-responsive-table { max-width: 100%; overflow-x: auto; }
+.rg-responsive-table table { min-width: 500px; }
+.rg-responsive-table td { white-space: normal; overflow-wrap: anywhere; }
+.rg-file-input { height: auto; min-height: 38px; }
+.rg-survey-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.rg-survey-question { min-width: 0; }
+.rg-survey-choice label { min-height: 36px; overflow-wrap: anywhere; white-space: normal; }
+.rg-survey-choice input { margin-right: 8px; }
+@media (max-width: 480px) {
+  .rg-responsive-table table { font-size: 12px; }
+  .modal-dialog .control-label { white-space: normal; }
+}
+

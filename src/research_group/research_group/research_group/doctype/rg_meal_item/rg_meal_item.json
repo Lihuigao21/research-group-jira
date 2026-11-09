@@ -1,0 +1,89 @@
+{
+  "doctype": "DocType",
+  "name": "RG Meal Item",
+  "module": "Research Group",
+  "custom": 0,
+  "engine": "InnoDB",
+  "istable": 1,
+  "track_changes": 0,
+  "allow_rename": 0,
+  "field_order": [
+    "item_id",
+    "category",
+    "item_name",
+    "price_cents",
+    "spice",
+    "description",
+    "staples_json",
+    "fixed_staple",
+    "image_url"
+  ],
+  "fields": [
+    {
+      "fieldname": "item_id",
+      "label": "餐品标识",
+      "fieldtype": "Data",
+      "length": 40,
+      "reqd": 1
+    },
+    {
+      "fieldname": "category",
+      "label": "分类",
+      "fieldtype": "Select",
+      "options": "meal\naddon",
+      "reqd": 1
+    },
+    {
+      "fieldname": "item_name",
+      "label": "餐品名称",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "length": 200,
+      "reqd": 1
+    },
+    {
+      "fieldname": "price_cents",
+      "label": "单价（分）",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "spice",
+      "label": "辣度",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "description",
+      "label": "完整配菜",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1
+    },
+    {
+      "fieldname": "staples_json",
+      "label": "可选主食",
+      "fieldtype": "Long Text",
+      "ignore_xss_filter": 1
+    },
+    {
+      "fieldname": "fixed_staple",
+      "label": "固定主食",
+      "fieldtype": "Data",
+      "ignore_xss_filter": 1,
+      "length": 80
+    },
+    {
+      "fieldname": "image_url",
+      "label": "商家参考图",
+      "fieldtype": "Data",
+      "length": 250
+    }
+  ],
+  "permissions": [],
+  "actions": [],
+  "links": [],
+  "states": [],
+  "show_name_in_global_search": 0,
+  "protect_attached_files": 1,
+  "sort_field": "creation",
+  "sort_order": "DESC"
+}

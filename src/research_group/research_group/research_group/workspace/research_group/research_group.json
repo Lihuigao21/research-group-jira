@@ -1,0 +1,122 @@
+{
+  "doctype": "Workspace",
+  "name": "课题组协作",
+  "label": "课题组协作",
+  "title": "课题组协作",
+  "module": "Research Group",
+  "type": "Workspace",
+  "public": 1,
+  "standard": 1,
+  "is_hidden": 0,
+  "icon": "project",
+  "sequence_id": 1,
+  "roles": [
+    {
+      "role": "课题组教师"
+    },
+    {
+      "role": "课题组学生"
+    },
+    {
+      "role": "课题组秘书"
+    }
+  ],
+  "shortcuts": [
+    {
+      "label": "教师工作台",
+      "link_to": "rg-teacher-portal",
+      "type": "Page",
+      "color": "Blue"
+    },
+    {
+      "label": "秘书工作台",
+      "link_to": "rg-secretary-portal",
+      "type": "Page",
+      "color": "Blue"
+    },
+    {
+      "label": "学生工作台",
+      "link_to": "rg-student-portal",
+      "type": "Page",
+      "color": "Blue"
+    },
+    {
+      "label": "课题",
+      "link_to": "RG Topic",
+      "type": "DocType",
+      "color": "Blue"
+    },
+    {
+      "label": "追加进展",
+      "link_to": "RG Progress",
+      "type": "DocType",
+      "color": "Blue"
+    },
+    {
+      "label": "预约讨论",
+      "link_to": "RG Appointment",
+      "type": "DocType",
+      "color": "Blue"
+    },
+    {
+      "label": "讨论归档",
+      "link_to": "RG Discussion Record",
+      "type": "DocType",
+      "color": "Blue"
+    },
+    {
+      "label": "组会",
+      "link_to": "RG Group Meeting",
+      "type": "DocType",
+      "color": "Blue"
+    },
+    {
+      "label": "报告与材料",
+      "link_to": "RG Meeting Report",
+      "type": "DocType",
+      "color": "Blue"
+    },
+    {
+      "label": "教师总览",
+      "link_to": "RG Teacher Overview",
+      "type": "Report",
+      "color": "Blue"
+    },
+    {
+      "label": "我的课题时间线",
+      "link_to": "RG Student Timeline",
+      "type": "Report",
+      "color": "Blue"
+    },
+    {
+      "label": "公开排期与材料",
+      "link_to": "RG Secretary Schedule",
+      "type": "Report",
+      "color": "Blue"
+    },
+    {
+      "label": "投票与问卷",
+      "link_to": "RG Survey",
+      "type": "DocType",
+      "color": "Blue"
+    },
+    {
+      "label": "问卷答卷",
+      "link_to": "RG Survey Response",
+      "type": "DocType",
+      "color": "Blue"
+    },
+    {
+      "label": "我的 AI 助手",
+      "link_to": "rg-ai-assistant",
+      "type": "Page",
+      "color": "Blue"
+    }
+  ],
+  "content": "[{\"id\": \"rg-intro\", \"type\": \"header\", \"data\": {\"text\": \"<b>课题组协作</b>\", \"col\": 12}}, {\"id\": \"rg-portal-0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"教师工作台\", \"col\": 4}}, {\"id\": \"rg-portal-1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"秘书工作台\", \"col\": 4}}, {\"id\": \"rg-portal-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"学生工作台\", \"col\": 4}}, {\"id\": \"rg-shortcut-0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"课题\", \"col\": 4}}, {\"id\": \"rg-shortcut-1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"追加进展\", \"col\": 4}}, {\"id\": \"rg-shortcut-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"预约讨论\", \"col\": 4}}, {\"id\": \"rg-shortcut-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"讨论归档\", \"col\": 4}}, {\"id\": \"rg-shortcut-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"组会\", \"col\": 4}}, {\"id\": \"rg-shortcut-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"报告与材料\", \"col\": 4}}, {\"id\": \"rg-shortcut-6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"教师总览\", \"col\": 4}}, {\"id\": \"rg-shortcut-7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"我的课题时间线\", \"col\": 4}}, {\"id\": \"rg-shortcut-8\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"公开排期与材料\", \"col\": 4}}, {\"id\": \"rg-shortcut-9\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"投票与问卷\", \"col\": 4}}, {\"id\": \"rg-shortcut-10\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"问卷答卷\", \"col\": 4}}, {\"id\": \"rg-ai-shortcut\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"我的 AI 助手\", \"col\": 4}}]",
+  "links": [],
+  "charts": [],
+  "number_cards": [],
+  "quick_lists": [],
+  "custom_blocks": []
+}

@@ -1,0 +1,32 @@
+{
+  "project": "Apache POI",
+  "commit": "0614835c55f44ab6f3e9b0850ca51e0e53a65a49",
+  "license": "Apache-2.0; see APACHE-POI-LICENSE.txt and APACHE-POI-NOTICE.txt",
+  "retrieved_utc": "2026-11-06",
+  "files": [
+    {
+      "file": "basic_test_ppt_file.ppt",
+      "source_url": "https://raw.githubusercontent.com/apache/poi/0614835c55f44ab6f3e9b0850ca51e0e53a65a49/test-data/slideshow/basic_test_ppt_file.ppt",
+      "sha256": "e8fd4c38ad72ce3735acbca0b60dd5870fb60f819c169e3947d166f4f1bcc79d",
+      "bytes": 15360
+    },
+    {
+      "file": "sample.pptx",
+      "source_url": "https://raw.githubusercontent.com/apache/poi/0614835c55f44ab6f3e9b0850ca51e0e53a65a49/test-data/slideshow/sample.pptx",
+      "sha256": "108d7219130a8460298896f45ff777dfe52b8b5527a4b4628b10731ed01d6a8e",
+      "bytes": 47215
+    },
+    {
+      "file": "APACHE-POI-LICENSE.txt",
+      "source_url": "https://raw.githubusercontent.com/apache/poi/0614835c55f44ab6f3e9b0850ca51e0e53a65a49/legal/LICENSE",
+      "sha256": "594d0f06dc8fefb90fc81bcc3c19cd3641f35601ddc1a6c02abf248d52bf98be",
+      "bytes": 16744
+    },
+    {
+      "file": "APACHE-POI-NOTICE.txt",
+      "source_url": "https://raw.githubusercontent.com/apache/poi/0614835c55f44ab6f3e9b0850ca51e0e53a65a49/legal/NOTICE",
+      "sha256": "9e044320dd0507910120fb3c7b1192ac5e3830358d7a4702c688b4117258f8e3",
+      "bytes": 1104
+    }
+  ]
+}
