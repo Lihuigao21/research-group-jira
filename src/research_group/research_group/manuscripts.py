@@ -21,7 +21,7 @@ from frappe.utils import get_datetime, now_datetime
 from pypdf import PdfReader, apply_configuration
 from pypdf.generic import DecodedStreamObject, EncodedStreamObject
 
-from research_group.ai.security import current_roles, global_lock
+from research_group.ai.security import current_roles, global_lock, prefilter_roles
 from research_group.files import (
     DEFAULT_MAX_BYTES, MAX_MANUSCRIPT_PARAGRAPHS, MAX_MANUSCRIPT_TEXT, _validate_docx,
     max_bytes, read_stored_file_bytes, save_managed_file, validate_manuscript,
@@ -185,6 +185,57 @@ def get_authorized_manuscript(name, user=None):
     return manuscript
 
 
+def _prefilter_manuscript(name, user=None, kind=None):
+    """Reject non-participants before byte-heavy work, without the global gate.
+
+    Plain reads take no locks (the gate→identity order stays intact) and may be
+    stale, so this only avoids wasted work: get_authorized_manuscript/version
+    under the gate remains the sole authorization for reads and writes.
+    """
+    user = user or frappe.session.user
+    if user != frappe.session.user or not isinstance(name, str) or not 1 <= len(name) <= 140:
+        deny()
+    row = frappe.db.get_value("RG Manuscript", name, ["name", "author", "reviewer"], as_dict=True)
+    assigned = prefilter_roles(user)
+    if not row or not _participant(row, user, assigned):
+        deny()
+    if kind is not None and (
+        kind not in {"student_draft", "teacher_annotation"}
+        or (kind == "student_draft" and (row.author != user or STUDENT not in assigned))
+        or (kind == "teacher_annotation" and (row.reviewer != user or TEACHER not in assigned))
+    ):
+        deny()
+    return row
+
+
+_IMMUTABLE_VERSION_FIELDS = ("manuscript", "material_file", "size_bytes", "sha256", "original_filename")
+
+
+def _prefilter_version(name):
+    if not isinstance(name, str) or not 1 <= len(name) <= 140:
+        deny()
+    row = frappe.db.get_value("RG Manuscript Version", name, ["name", *_IMMUTABLE_VERSION_FIELDS], as_dict=True)
+    if not row:
+        deny()
+    _prefilter_manuscript(row.manuscript)
+    return row
+
+
+def _confirm_same_version(record, snapshot):
+    # Versions are immutable; a mismatch means the pre-gate bytes are not the
+    # bytes now authorized, so nothing derived from them may be returned.
+    if any(record.get(key) != snapshot.get(key) for key in _IMMUTABLE_VERSION_FIELDS):
+        frappe.throw("论文版本记录已变化，请刷新后重试。", frappe.PermissionError)
+
+
+class _Prevalidated:
+    """Marks bytes upload_version already passed through validate_manuscript."""
+    __slots__ = ("digest", "filename")
+
+    def __init__(self, filename, digest):
+        self.filename, self.digest = filename, digest
+
+
 def get_authorized_version(name, user=None):
     # Read only the immutable parent pointer before taking the parent lock.
     if not isinstance(name, str) or not 1 <= len(name) <= 140:
@@ -303,8 +354,13 @@ def list_reviews(manuscript, offset=0, limit=50):
             "has_more": len(rows) > limit, "offset": offset}
 
 
-def submit_version(manuscript, expected_revision, filename, content, kind="student_draft", parent_version=None):
-    """Byte entry, not a model tool or whitelisted method."""
+def submit_version(manuscript, expected_revision, filename, content, kind="student_draft", parent_version=None,
+                   prevalidated=None):
+    """Byte entry, not a model tool or whitelisted method.
+
+    ``prevalidated`` is only produced by upload_version, which validates the
+    bytes before taking the global gate; every other caller validates here.
+    """
     doc = get_authorized_manuscript(manuscript)
     user, assigned = frappe.session.user, current_roles()
     if kind not in {"student_draft", "teacher_annotation"}:
@@ -313,8 +369,12 @@ def submit_version(manuscript, expected_revision, filename, content, kind="stude
             or (kind == "teacher_annotation" and (doc.reviewer != user or TEACHER not in assigned))):
         deny()
     revision = _integer(expected_revision)
-    validate_manuscript(filename, content)
+    if prevalidated is None:
+        validate_manuscript(filename, content)
     digest = hashlib.sha256(content).hexdigest()
+    if prevalidated is not None and (type(prevalidated) is not _Prevalidated or prevalidated.filename != filename
+                                     or prevalidated.digest != digest):
+        deny()
     key = hashlib.sha256(json.dumps([doc.name, user, revision, filename, digest, kind, parent_version],
                                    ensure_ascii=False).encode("utf-8")).hexdigest()
     prior = frappe.db.sql("SELECT name FROM `tabRG Manuscript Version` WHERE upload_key=%s FOR UPDATE",
@@ -341,8 +401,9 @@ def submit_version(manuscript, expected_revision, filename, content, kind="stude
                           kind=kind, parent_version=parent_version, original_filename=filename,
                           submitted_by=user, submitted_at=submitted_at, size_bytes=len(content),
                           sha256=digest, upload_key=key)
+        # validate_manuscript already ran on these bytes (here or in upload_version).
         file = save_managed_file(filename, content, "RG Manuscript Version", version.name,
-                                 created_files=created_files)
+                                 created_files=created_files, already_validated=True)
         stored = read_stored_file_bytes(file, max_read_bytes=len(content))
         if len(stored) != len(content) or hashlib.sha256(stored).hexdigest() != digest:
             frappe.throw("论文落盘原字节校验失败。")
@@ -363,12 +424,22 @@ def submit_version(manuscript, expected_revision, filename, content, kind="stude
 @frappe.whitelist(methods=["POST"])
 def upload_version(manuscript, expected_revision, kind="student_draft", parent_version=None):
     _write({"manuscript", "expected_revision", "kind", "parent_version"})
-    get_authorized_manuscript(manuscript)  # authorization precedes multipart reading
+    # Authorization precedes multipart reading. The unlocked prefilter keeps the
+    # site-wide gate free while bytes are read and validated: PDF validation runs
+    # in a subprocess for up to PDF_PROCESS_TIMEOUT seconds. submit_version then
+    # takes the gate and repeats every identity, role and revision check.
+    if kind not in {"student_draft", "teacher_annotation"}:
+        deny()
+    _prefilter_manuscript(manuscript, kind=kind)
+    _integer(expected_revision)
     if not getattr(frappe.local, "request", None) or "file" not in frappe.request.files:
         frappe.throw("请选择PDF或DOCX文件。")
     stream = frappe.request.files["file"]
-    return submit_version(manuscript, expected_revision, stream.filename, stream.stream.read(max_bytes() + 1),
-                          kind=kind, parent_version=parent_version)
+    filename, content = stream.filename, stream.stream.read(max_bytes() + 1)
+    validate_manuscript(filename, content)
+    proof = _Prevalidated(filename, hashlib.sha256(content).hexdigest())
+    return submit_version(manuscript, expected_revision, filename, content,
+                          kind=kind, parent_version=parent_version, prevalidated=proof)
 
 
 def _saved_suggestion_valid(doc, memo):
@@ -726,9 +797,13 @@ def _version_paragraphs(record):
 
 @frappe.whitelist()
 def get_version_text(version, offset=0, limit=50):
-    record = get_authorized_version(version)
     offset, limit = _page(offset, limit)
-    paragraphs, truncated = _version_paragraphs(record)
+    # Parse the immutable file before the gate (up to PDF_PROCESS_TIMEOUT
+    # seconds), then authorize under it and confirm the same bytes.
+    snapshot = _prefilter_version(version)
+    paragraphs, truncated = _version_paragraphs(snapshot)
+    record = get_authorized_version(version)
+    _confirm_same_version(record, snapshot)
     return {"version": record.name, "paragraphs": [
         {"index": index, "text": paragraphs[index]} for index in range(offset, min(offset + limit, len(paragraphs)))
     ], "offset": offset, "has_more": offset + limit < len(paragraphs), "truncated": truncated,
@@ -738,10 +813,12 @@ def get_version_text(version, offset=0, limit=50):
 @frappe.whitelist(methods=["POST"])
 def create_selection(version, original_text, anchor="pasted"):
     _write({"version", "original_text", "anchor"})
-    record = get_authorized_version(version)
+    snapshot = _prefilter_version(version)
     original = _text(original_text, MAX_SELECTION_CHARS, "选定原文")
     anchor = _text(anchor, 300, "选区位置")
-    paragraphs, _ = _version_paragraphs(record)
+    paragraphs, _ = _version_paragraphs(snapshot)  # outside the gate, see get_version_text
+    record = get_authorized_version(version)
+    _confirm_same_version(record, snapshot)
     if _normalize(original) not in _normalize("\n\n".join(paragraphs)):
         frappe.throw("选定原文与该不可变论文版本不匹配，请从显示的文字重新选取。")
     # Bounded active excerpts prevent creating an unbounded second document store.

@@ -141,6 +141,8 @@ bench --site restore-ai.localhost execute research_group.ai.storage.replay_delet
 
 ## 验证命令
 
+GitHub Actions（`.github/workflows/checks.yml`）配置为在推送到 `main` 和 Pull Request 时运行离线源码、前端与 CI 入口保护检查，再用 MariaDB 11.8 和 Redis 运行完整 Frappe 测试。Linux 本机可运行 `DB_ROOT_PASSWORD=… scripts/ci-frappe-tests.sh`；它只接受不存在的 `BENCH_DIR` 和 `ci.localhost` 或 `ci-<小写字母数字>.localhost` 站点，拒绝复用或覆盖已有 bench。无数据库的入口保护检查为 `python scripts/check-ci-guards.py`。配置存在不代表 GitHub Actions 已实际执行；补丁提供者记录与当前验收分别见 [验证说明](docs/validation.md)。
+
 三角色、账号、通知、工作餐和论文的可复跑 HTTP 入口：
 
 ```powershell
@@ -223,7 +225,7 @@ bench start
 
 这个仓库提供可安装的 Frappe 应用、部署配方和测试，不包含运行数据库、上传材料、账号口令、API key、站点配置、备份或内部开发记录。初次启动时由 `scripts/create-local-config.py` 在本机生成新凭据；没有公开通用密码。
 
-应用源码从已验收开发版本 `81ef88729dc00c24a882ffdf95993745ce7859f4` 导出，保留的226个应用文件保持原字节，另省略7张许可待核实的照片；清单见 [源码清单](docs/source-manifest.json)。公开仓库使用独立历史，公开版本说明与内部工作记录分开保存。新增的发布说明不代表重新完成了真实邮件、模型或公网部署验收。
+应用源码最初从已验收开发版本 `81ef88729dc00c24a882ffdf95993745ce7859f4` 导出，导出时保留的226个应用文件保持原字节，另省略7张许可待核实的照片；[源码清单](docs/source-manifest.json)只记录这次首次导出的快照，之后的修改以本仓库 Git 历史为准。公开仓库使用独立历史，公开版本说明与内部工作记录分开保存。新增的发布说明不代表重新完成了真实邮件、模型或公网部署验收。
 
 HTTP 验收入口要求自行建立 `tasks/local-acceptance/TASK.md` 和被忽略的私密凭据文件，并选择独立测试站点；不会连接当前任何现有课题组站点。演示数据与测试账号全部为虚构。不要在真实业务站点运行写入型验收。
 

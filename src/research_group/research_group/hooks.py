@@ -71,11 +71,10 @@ doctype_js.update({d: "public/js/surveys.js" for d in _survey_doctypes if d != "
 from research_group.ai import AI_DOCTYPES
 has_permission.update({d: "research_group.ai.storage.no_permission" for d in AI_DOCTYPES})
 permission_query_conditions.update({d: "research_group.ai.storage.no_query" for d in AI_DOCTYPES})
-has_permission["Version"] = "research_group.ai.native.version_permission"
-permission_query_conditions["Version"] = "research_group.ai.native.version_query"
 from research_group.collaboration_security import INTERNAL_DOCTYPES
 has_permission.update({d: "research_group.collaboration_security.no_permission" for d in INTERNAL_DOCTYPES})
 permission_query_conditions.update({d: "research_group.collaboration_security.no_query" for d in INTERNAL_DOCTYPES})
+# One Version rule covers both AI and collaboration internals (a superset of ai.native's rule).
 has_permission["Version"] = "research_group.collaboration_security.version_permission"
 permission_query_conditions["Version"] = "research_group.collaboration_security.version_query"
 doc_events = {

@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 from xml.sax.saxutils import escape
@@ -21,6 +22,9 @@ from frappe.utils import now_datetime
 from pypdf import PdfWriter, get_configuration
 from pypdf.errors import LimitReachedError
 from pypdf.generic import DictionaryObject, EncodedStreamObject, NameObject
+from werkzeug.test import EnvironBuilder
+
+from research_group import manuscripts as manuscript_module
 
 from research_group.files import _safe_storage_name, _validate_docx, read_stored_file_bytes, validate_manuscript
 from research_group.manuscripts import (
@@ -821,6 +825,163 @@ class TestManuscripts(IntegrationTestCase):
             with self.subTest(method=function.__name__), self.assertRaises(frappe.PermissionError):
                 function(argument)
 
+    def _gate_trace(self):
+        """Record the order of PDF subprocess work and global-gate acquisitions."""
+        events = []
+        real_gate, real_parse = manuscript_module.global_lock, manuscript_module._parse_pdf_isolated
+
+        def gate():
+            events.append("gate")
+            return real_gate()
+
+        def parse(content, validate_only=False):
+            events.append("validate" if validate_only else "parse")
+            return real_parse(content, validate_only=validate_only)
+
+        return events, (patch.object(manuscript_module, "global_lock", side_effect=gate),
+                        patch.object(manuscript_module, "_parse_pdf_isolated", side_effect=parse))
+
+    def _upload(self, content, filename, revision=0, kind="student_draft"):
+        request = EnvironBuilder(method="POST", base_url="http://localhost/",
+                                 data={"file": (BytesIO(content), filename)}).get_request()
+        with patch.object(manuscript_module, "_write"), patch.object(frappe.local, "request", request, create=True):
+            return manuscript_module.upload_version(self.manuscript["name"], revision, kind)
+
+    def test_pdf_subprocess_work_runs_before_the_global_gate(self):
+        frappe.set_user(self.users["one"])
+        events, (gate, parse) = self._gate_trace()
+        with gate, parse:
+            version = self._upload(text_pdf(), "gate-order.pdf")
+            self.assertEqual(events.count("validate"), 1, events)  # not repeated under the gate
+            self.assertEqual(events[:2], ["validate", "gate"], events)
+            events.clear()
+            text = get_version_text(version["name"])["paragraphs"]
+            self.assertEqual(events[:2], ["parse", "gate"], events)
+            events.clear()
+            selection = create_selection(version["name"], text[0]["text"], "paragraph:0")
+            self.assertEqual(events[:2], ["parse", "gate"], events)
+        self.assertEqual(text[0]["text"], "Explicit authorized paragraph.")
+        self.assertEqual(selection["manuscript_version"], version["name"])
+        stored = frappe.get_doc("File", frappe.db.get_value("RG Manuscript Version", version["name"], "material_file"))
+        self.assertEqual(hashlib.sha256(read_stored_file_bytes(stored)).hexdigest(), version["sha256"])
+
+    def test_docx_multipart_validates_once_before_gate_and_rejects_damage_before_writing(self):
+        from research_group import files as file_module
+        events = []
+        real_validate, real_gate = file_module.validate_manuscript, manuscript_module.global_lock
+
+        def validate(filename, content):
+            events.append("validate")
+            return real_validate(filename, content)
+
+        def gate():
+            events.append("gate")
+            return real_gate()
+
+        with patch.object(manuscript_module, "validate_manuscript", side_effect=validate), \
+                patch.object(file_module, "validate_manuscript", side_effect=validate), \
+                patch.object(file_module, "_validate_docx", wraps=file_module._validate_docx) as parse, \
+                patch.object(manuscript_module, "global_lock", side_effect=gate):
+            version = self._upload(docx_bytes(), "multipart.docx")
+            self.assertEqual(events[:2], ["validate", "gate"], events)
+            self.assertEqual((events.count("validate"), parse.call_count), (1, 1))
+            stored = frappe.get_doc("File", frappe.db.get_value("RG Manuscript Version", version["name"], "material_file"))
+            self.assertEqual(read_stored_file_bytes(stored), docx_bytes())
+            counts = (frappe.db.count("RG Manuscript Version"), frappe.db.count("File"))
+            events.clear()
+            with patch.object(manuscript_module, "save_managed_file") as save:
+                with self.assertRaises(frappe.ValidationError):
+                    self._upload(mutate_docx(omit=("word/document.xml",)), "damaged.docx", revision=1)
+                save.assert_not_called()
+            self.assertEqual(events, ["validate"])
+            self.assertEqual((frappe.db.count("RG Manuscript Version"), frappe.db.count("File")), counts)
+
+    def test_non_participant_is_rejected_before_any_byte_work(self):
+        frappe.set_user(self.users["one"])
+        version = self.version(text_pdf(), "owned.pdf")
+        events, (gate, parse) = self._gate_trace()
+        frappe.set_user(self.users["two"])
+        with gate, parse:
+            for call in (lambda: self._upload(text_pdf(), "intruder.pdf"),
+                         lambda: get_version_text(version["name"]),
+                         lambda: create_selection(version["name"], "Explicit authorized paragraph.")):
+                with self.assertRaises(frappe.PermissionError):
+                    call()
+        self.assertEqual(events, [])
+        frappe.set_user(self.users["one"])
+        with self.assertRaises(frappe.PermissionError):  # wrong kind for the author is also a cheap rejection
+            self._upload(text_pdf(), "annotation.pdf", kind="teacher_annotation")
+
+    def test_dual_author_reviewer_lost_upload_role_is_rejected_before_parsing(self):
+        frappe.set_user("Administrator")
+        user = frappe.get_doc("User", self.users["one"])
+        user.append("roles", {"role": TEACHER})
+        user.save(ignore_permissions=True)
+        frappe.set_user(self.users["one"])
+        self.manuscript = create_manuscript("虚构同一作者与评阅人", self.users["one"])
+        for removed, kind, remaining in ((TEACHER, "teacher_annotation", STUDENT),
+                                         (STUDENT, "student_draft", TEACHER)):
+            with self.subTest(removed=removed):
+                frappe.set_user("Administrator")
+                user = frappe.get_doc("User", self.users["one"])
+                user.set("roles", [{"role": remaining}])
+                user.save(ignore_permissions=True)
+                frappe.set_user(self.users["one"])
+                events, (gate, parse) = self._gate_trace()
+                with gate, parse, self.assertRaises(frappe.PermissionError):
+                    self._upload(text_pdf(), "role-revoked.pdf", kind=kind)
+                self.assertEqual(events, [])
+        self.assertEqual(frappe.db.count("RG Manuscript Version", {"manuscript": self.manuscript["name"]}), 0)
+
+    def test_stale_prefilter_cannot_authorize_parsed_text(self):
+        version = self.version(text_pdf(), "revoked.pdf")
+        frappe.set_user("Administrator")
+        member = frappe.get_doc("RG Member", frappe.db.get_value("RG Member", {"user": self.users["one"]}, "name"))
+        member.active = 0
+        member.save(ignore_permissions=True)
+        frappe.set_user(self.users["one"])
+        # Simulate a pre-revocation snapshot: the locked check after parsing must still deny.
+        with patch.object(manuscript_module, "prefilter_roles", return_value={STUDENT}):
+            for call in (lambda: get_version_text(version["name"]),
+                         lambda: create_selection(version["name"], "Explicit authorized paragraph."),
+                         lambda: self._upload(text_pdf(), "after-revoke.pdf", revision=1)):
+                with self.assertRaises(frappe.PermissionError):
+                    call()
+        self.assertEqual(frappe.db.count("RG Manuscript Version", {"manuscript": self.manuscript["name"]}), 1)
+
+    def test_prevalidated_proof_must_match_the_submitted_bytes(self):
+        frappe.set_user(self.users["one"])
+        content = docx_bytes()
+        forged = manuscript_module._Prevalidated("draft.docx", hashlib.sha256(b"other").hexdigest())
+        for proof in (forged, SimpleNamespace(filename="draft.docx", digest=hashlib.sha256(content).hexdigest())):
+            with self.assertRaises(frappe.PermissionError):
+                submit_version(self.manuscript["name"], 0, "draft.docx", content, prevalidated=proof)
+        self.assertEqual(frappe.db.count("RG Manuscript Version", {"manuscript": self.manuscript["name"]}), 0)
+
+    def test_all_five_snapshot_fields_are_rechecked_after_real_parsing(self):
+        version = self.version(text_pdf(), "snapshot.pdf")
+        parse = manuscript_module._version_paragraphs
+        fields = ("manuscript", "material_file", "size_bytes", "sha256", "original_filename")
+        self.assertEqual(manuscript_module._IMMUTABLE_VERSION_FIELDS, fields)
+        for field in fields:
+            def mismatch(snapshot):
+                result = parse(snapshot)
+                snapshot[field] = snapshot[field] + 1 if field == "size_bytes" else snapshot[field] + "-changed"
+                return result
+
+            with self.subTest(field=field), patch.object(manuscript_module, "_version_paragraphs", side_effect=mismatch) as parsed:
+                for call in (lambda: get_version_text(version["name"]),
+                             lambda: create_selection(version["name"], "Explicit authorized paragraph.")):
+                    with self.assertRaises(frappe.PermissionError):
+                        call()
+                self.assertEqual(parsed.call_count, 2)
+                self.assertEqual(frappe.db.count("RG Manuscript Selection", {"manuscript": self.manuscript["name"]}), 0)
+        text = get_version_text(version["name"])["paragraphs"][0]["text"]
+        self.assertEqual(text, "Explicit authorized paragraph.")
+        selection = create_selection(version["name"], text)
+        self.assertEqual(selection["manuscript_version"], version["name"])
+        self.assertEqual(frappe.db.count("RG Manuscript Selection", {"manuscript": self.manuscript["name"]}), 1)
+
     def _race(self, jobs):
         frappe.db.commit()
         self.committed_fixture = True
@@ -877,6 +1038,34 @@ class TestManuscripts(IntegrationTestCase):
         self.assertFalse(reader["file_permission"])
         self.assertTrue(reader["text_denied"])
 
+    def test_independent_parser_does_not_hold_gate_or_identity_locks_and_rechecks_revocation(self):
+        version = self.version(text_pdf(), "parse-revocation.pdf")
+        for operation in ("multipart_parse", "text_parse", "selection_parse"):
+            with self.subTest(operation=operation):
+                # _race commits the initial upload/identity transaction. No
+                # list/get endpoint acquires a gate before the parser starts.
+                results = self._race([
+                    {"action": "revoke_during_parse", "user": "Administrator", "target": self.users["one"]},
+                    {"action": operation, "user": self.users["one"], "manuscript": self.manuscript["name"],
+                     "version": version["name"]},
+                ])
+                writer, reader = results
+                self.assertTrue(writer["ok"] and writer["revocation_committed_while_parser_paused"], results)
+                self.assertFalse(reader["ok"], results)
+                self.assertEqual(reader["error"], "PermissionError", results)
+                self.assertTrue(reader["real_parse_completed"] and reader["revocation_before_parse_resume"], results)
+                self.assertFalse(reader["returned_response"], results)
+                self.assertEqual(frappe.db.count("RG Manuscript Version", {"manuscript": self.manuscript["name"]}), 1)
+                self.assertEqual(frappe.db.count("RG Manuscript Selection", {"manuscript": self.manuscript["name"]}), 0)
+                frappe.set_user("Administrator")
+                user = frappe.get_doc("User", self.users["one"])
+                user.enabled = 1
+                user.append("roles", {"role": STUDENT})
+                user.save(ignore_permissions=True)
+                member = frappe.get_doc("RG Member", self.users["one"])
+                member.active = 1
+                member.save(ignore_permissions=True)
+
     def test_independent_competing_revisions_preserve_one_immutable_version(self):
         results = self._race([
             {"action": "upload", "user": self.users["one"], "manuscript": self.manuscript["name"],
@@ -921,6 +1110,27 @@ class TestManuscripts(IntegrationTestCase):
         self.assertFalse(results[1]["has_body"])
 
 
+def manuscript_paused_pdf_worker(folder, worker_id, validate_only=False):
+    """Run the real bounded PDF worker, pausing its real parser before return."""
+    from research_group import manuscripts
+    root = Path(folder)
+    extract = manuscripts._extract_pdf_paragraphs
+
+    def paused_extract(*args, **kwargs):
+        result = extract(*args, **kwargs)
+        (root / f"{worker_id}.parsing").write_text(str(os.getpid()), encoding="ascii")
+        deadline = time.monotonic() + 15
+        while not (root / "0.revocation-committed").exists():
+            if time.monotonic() > deadline:
+                raise TimeoutError("identity revocation could not commit while the real parser was paused")
+            time.sleep(0.03)
+        (root / f"{worker_id}.parse-resumed").write_text(str(time.monotonic_ns()), encoding="ascii")
+        return result
+
+    with patch.object(manuscripts, "_extract_pdf_paragraphs", side_effect=paused_extract):
+        manuscripts._pdf_parse_worker(validate_only=validate_only)
+
+
 def manuscript_race_worker():
     from research_group import manuscripts
     from research_group.ai.security import current_roles
@@ -936,6 +1146,10 @@ def manuscript_race_worker():
         cached_roles = sorted(frappe.get_roles())
         # Preserve a real ordinary-read snapshot before waiting for revocation.
         frappe.db.sql("SELECT name FROM `tabRG Manuscript` ORDER BY name LIMIT 1")
+        parse_actions = {"multipart_parse", "text_parse", "selection_parse"}
+        if job["action"] in parse_actions | {"revoke_during_parse"}:
+            # Release every setup transaction before testing parse-time locks.
+            frappe.db.commit()
         if job.get("hold"):
             manuscripts.global_lock()
         connection = frappe.db.sql("SELECT CONNECTION_ID()")[0][0]
@@ -958,8 +1172,49 @@ def manuscript_race_worker():
 
         try:
             extra = {}
+            returned_response = False
             with patch.object(manuscripts, "global_lock", side_effect=observed_gate):
-                if job["action"] == "revoke_teacher":
+                if job["action"] == "revoke_during_parse":
+                    while not (root / "1.parsing").exists():
+                        if time.monotonic() > deadline:
+                            raise TimeoutError("the real parser did not reach its pause")
+                        time.sleep(0.03)
+                    manuscripts.global_lock()
+                    user = frappe.get_doc("User", job["target"])
+                    user.enabled = 0
+                    user.set("roles", [row for row in user.roles if row.role != STUDENT])
+                    user.save(ignore_permissions=True)
+                    member = frappe.get_doc("RG Member", job["target"])
+                    member.active = 0
+                    member.save(ignore_permissions=True)
+                    assert not (root / "1.parse-resumed").exists()
+                    frappe.db.commit()
+                    (root / "0.revocation-committed").write_text(str(time.monotonic_ns()), encoding="ascii")
+                    extra = {"revocation_committed_while_parser_paused": True}
+                elif job["action"] in parse_actions:
+                    run = manuscripts.subprocess.run
+
+                    def observed_parser(command, *args, **kwargs):
+                        if len(command) == 3 and "_pdf_parse_worker" in command[2]:
+                            validate_only = "validate_only=True" in command[2]
+                            entry = ("from research_group.tests.test_manuscripts import manuscript_paused_pdf_worker; "
+                                     f"manuscript_paused_pdf_worker({str(root)!r}, {worker_id!r}, {validate_only!r})")
+                            command = [command[0], "-c", entry]
+                        return run(command, *args, **kwargs)
+
+                    with patch.object(manuscripts.subprocess, "run", side_effect=observed_parser), \
+                            patch.object(manuscripts, "PDF_PROCESS_TIMEOUT", 20):
+                        if job["action"] == "multipart_parse":
+                            request = EnvironBuilder(method="POST", base_url="http://localhost/",
+                                                     data={"file": (BytesIO(text_pdf()), "waiting-parse.pdf")}).get_request()
+                            with patch.object(manuscripts, "_write"), patch.object(frappe.local, "request", request, create=True):
+                                manuscripts.upload_version(job["manuscript"], 1)
+                        elif job["action"] == "text_parse":
+                            manuscripts.get_version_text(job["version"])
+                        else:
+                            manuscripts.create_selection(job["version"], "Explicit authorized paragraph.")
+                        returned_response = True
+                elif job["action"] == "revoke_teacher":
                     user = frappe.get_doc("User", job["target"])
                     user.set("roles", [row for row in user.roles if row.role != TEACHER])
                     user.save(ignore_permissions=True)
@@ -996,6 +1251,12 @@ def manuscript_race_worker():
         except (frappe.ValidationError, frappe.PermissionError) as error:
             frappe.db.rollback()
             result = {"ok": False, "connection": connection, "error": type(error).__name__}
+        if job["action"] in parse_actions:
+            committed, resumed = root / "0.revocation-committed", root / f"{worker_id}.parse-resumed"
+            result.update(returned_response=returned_response,
+                          real_parse_completed=(root / f"{worker_id}.parsing").exists(),
+                          revocation_before_parse_resume=(committed.exists() and resumed.exists()
+                              and int(committed.read_text()) < int(resumed.read_text())))
         print(json.dumps(result))
     finally:
         frappe.destroy()

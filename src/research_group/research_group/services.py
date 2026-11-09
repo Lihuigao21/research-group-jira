@@ -206,8 +206,9 @@ def submit_material(report, topic, filename, content):
     created_files = []
     try:
         save_internal(version, new=True)
-        file = save_managed_file(
+        file = save_managed_file(  # validate_material ran on these bytes at the top of this function
             filename, content, "RG Material Version", version.name, created_files=created_files,
+            already_validated=True,
         )
         stored = read_stored_file_bytes(file, max_read_bytes=len(content))
         if len(stored) != version.size_bytes or hashlib.sha256(stored).hexdigest() != version.sha256:
@@ -245,8 +246,8 @@ def upload_discussion_material(doctype, name):
     if not ((doc.student == frappe.session.user and STUDENT in r)
             or (doc.teacher == frappe.session.user and TEACHER in r)):
         deny()
-    filename, content = _upload()
-    file = save_managed_file(filename, content, doctype, name)
+    filename, content = _upload()  # validates these bytes
+    file = save_managed_file(filename, content, doctype, name, already_validated=True)
     return {"name": file.name, "file_url": file.unique_url}
 
 

@@ -85,6 +85,7 @@
       const body = $("<div class='rg-portal'></div>").appendTo(root);
       const header = $("<header class='rg-portal-header'></header>").appendTo(body);
       const intro = $("<div></div>").appendTo(header);
+      $("<span class='rg-portal-eyebrow'></span>").text("课题组协作").appendTo(intro);
       $("<h2></h2>").text(title).appendTo(intro);
       $("<p></p>").text("使用同一账号协作，资料按当前权限显示。").appendTo(intro);
       const select = $("<select class='form-control rg-portal-role' aria-label='切换工作台'></select>").appendTo(header);
@@ -120,11 +121,13 @@
         const shell = await UI.shell(this.wrapper, title, this.role, () => ticket === this.epoch);
         if (!shell) return;
         const {body, data} = shell;
-        if (data.introduction) UI.text(body, data.introduction);
+        if (data.introduction) UI.text(body, data.introduction, "rg-portal-text rg-portal-intro");
         if (data.announcements.length) {
           const section = UI.section(body, "课题组公告");
-          data.announcements.forEach(item => { $("<h4></h4>").text(item.title).appendTo(section);
-            UI.text(section, item.body); UI.text(section, UI.date(item.published_at), "rg-portal-meta"); });
+          const cards = $("<div class='rg-portal-cards'></div>").appendTo(section);
+          data.announcements.forEach(item => { const card = $("<article class='rg-portal-card'></article>").appendTo(cards);
+            $("<h4></h4>").text(item.title).appendTo(card);
+            UI.text(card, item.body); UI.text(card, UI.date(item.published_at), "rg-portal-meta"); });
         }
         const links = $("<nav class='rg-portal-links' aria-label='课题组功能'></nav>").appendTo(body);
         data.navigation.forEach(item => links.append(UI.link(item.route, item.label)));

@@ -118,30 +118,36 @@
         const menuItems = round.menu.items;
         menuItems.forEach(item => {
           const li = $("<article class='rg-meal-item'></article>").toggleClass("rg-meal-addon", item.category === "addon").appendTo(cards);
-          if (item.imageUrl && /^\/assets\/research_group\/menu\/[a-zA-Z0-9/._-]+$/.test(item.imageUrl)) $("<img loading='lazy'>").attr({src: item.imageUrl, alt: item.name + "参考图"}).appendTo(li);
+          const hasImage = Boolean(item.imageUrl && /^\/assets\/research_group\/menu\/[a-zA-Z0-9/._-]+$/.test(item.imageUrl));
+          // Menu photos are deployment-supplied; a missing file falls back to a placeholder instead of a broken layout.
+          li.toggleClass("rg-meal-noimg", item.category !== "addon" && !hasImage);
+          if (hasImage) $("<img loading='lazy'>").attr({src: item.imageUrl, alt: item.name + "参考图"})
+            .on("error", event => { $(event.target).remove(); li.addClass("rg-meal-noimg"); }).appendTo(li);
           const detail = $("<div></div>").appendTo(li); $("<h4></h4>").text(item.name).appendTo(detail);
-          UI.text(detail, "¥" + UI.money(item.priceCents), "rg-portal-meta"); UI.text(detail, item.description);
-          if (item.spice) UI.text(detail, "辣度 " + item.spice + "/5", "rg-portal-meta");
+          UI.text(detail, "¥" + UI.money(item.priceCents), "rg-portal-meta rg-meal-price"); UI.text(detail, item.description);
+          if (item.spice) UI.text(detail, "辣度 " + item.spice + "/5", "rg-portal-meta rg-meal-spice");
           const controls = $("<div class='rg-meal-quantity'></div>").appendTo(detail);
           const quantity = UI.select(controls, "份数", Array.from({length: 21}, (_, number) => String(number)), String((current.get(item.id) || {}).quantity || 0)).prop("disabled", !canEdit);
           const stapleOptions = item.staples || (item.fixedStaple ? [item.fixedStaple] : []);
           const staple = stapleOptions.length ? UI.select(controls, "主食", stapleOptions, (current.get(item.id) || {}).staple || stapleOptions[0]).prop("disabled", !canEdit) : null;
-          selections.push({item, quantity, staple});
+          selections.push({item, quantity, staple, card: li});
         });
         const remarks = UI.field(menu, "备注（最多 300 字）", "textarea", order ? order.remarks : "").attr("maxlength", 300).prop("disabled", !canEdit);
-        const total = $("<p class='rg-meal-total'></p>").appendTo(menu);
-        const label = $("<label class='rg-portal-check'></label>").appendTo(menu);
+        const bar = $("<div class='rg-meal-bar'></div>").appendTo(menu);
+        const total = $("<p class='rg-meal-total'></p>").appendTo(bar);
+        const label = $("<label class='rg-portal-check'></label>").appendTo(bar);
         const acknowledge = $("<input type='checkbox'>").appendTo(label); $("<span>合计严格超过 50 元，我已核对并确认本次超额。</span>").appendTo(label);
         let submitting = false;
         const recalculate = () => {
           if (submitting) return;
           const cents = selections.reduce((sum, row) => sum + row.item.priceCents * Number(row.quantity.val()), 0);
+          selections.forEach(row => row.card.toggleClass("rg-meal-selected", Number(row.quantity.val()) > 0));
           total.text("合计 ¥" + UI.money(cents)); label.toggle(cents > 5000); acknowledge.prop("checked", false);
           this.request = null; return cents;
         };
         selections.forEach(row => { row.quantity.on("change", recalculate); if (row.staple) row.staple.on("change", recalculate); }); remarks.on("input", recalculate); recalculate();
         if (!canEdit) { UI.text(menu, "本轮目前不能提交或修改，请保留已保存订单。", "rg-portal-note"); return; }
-        UI.button(menu, order ? "保存本人订单修改" : "提交本人订单", async () => {
+        UI.button(bar, order ? "保存本人订单修改" : "提交本人订单", async () => {
           const items = selections.filter(row => Number(row.quantity.val()) > 0).map(row => ({id: row.item.id, quantity: Number(row.quantity.val()), staple: row.staple ? row.staple.val() : ""}));
           const cents = selections.reduce((sum, row) => sum + row.item.priceCents * Number(row.quantity.val()), 0);
           if (!items.some(item => menuItems.find(row => row.id === item.id).category === "meal")) throw new Error("请至少选择一份主餐。");

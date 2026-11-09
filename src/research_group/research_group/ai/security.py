@@ -60,20 +60,33 @@ def user_state(user):
     return rows[0]
 
 
-def current_roles(user=None):
-    user = user or frappe.session.user
+def _roles(user, lock_clause):
     if user in {"Guest", "Administrator"}:
         # 运维不是业务助手身份，也不替请求人执行工具。
         deny()
-    enabled = frappe.db.sql("SELECT enabled FROM `tabUser` WHERE name=%s LOCK IN SHARE MODE", (user,))
-    member = frappe.db.sql("SELECT active FROM `tabRG Member` WHERE user=%s LOCK IN SHARE MODE", (user,))
+    enabled = frappe.db.sql("SELECT enabled FROM `tabUser` WHERE name=%s" + lock_clause, (user,))
+    member = frappe.db.sql("SELECT active FROM `tabRG Member` WHERE user=%s" + lock_clause, (user,))
     assigned = frappe.db.sql(
-        "SELECT role FROM `tabHas Role` WHERE parent=%s AND parenttype='User' LOCK IN SHARE MODE", (user,),
+        "SELECT role FROM `tabHas Role` WHERE parent=%s AND parenttype='User'" + lock_clause, (user,),
     )
     found = {row[0] for row in assigned}.intersection(ROLES)
     if not enabled or not enabled[0][0] or not member or not member[0][0] or not found:
         deny()
     return found
+
+
+def current_roles(user=None):
+    return _roles(user or frappe.session.user, " LOCK IN SHARE MODE")
+
+
+def prefilter_roles(user=None):
+    """Unlocked roles for rejecting a request before expensive byte work.
+
+    Never authoritative: the snapshot may be stale. It takes no row locks, so it
+    cannot invert the gate→identity lock order; callers must still pass the
+    global gate and current_roles() before reading or writing protected data.
+    """
+    return _roles(user or frappe.session.user, "")
 
 
 def conversation_row(name, user):

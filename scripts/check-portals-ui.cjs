@@ -162,11 +162,17 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
   const meal = Object.create(meals.rg.MealsPage.prototype);
   meal.wrapper = {}; meal.request = "previous-id"; meal.roundEpoch = 0;
   const round = {name: "round-1", title: "虚构餐轮", status: "已发布", accepting_orders: true, can_manage: false, my_order: null,
-    menu: {items: [{id: "meal-1", category: "meal", name: "主餐", priceCents: 5100, description: "完整配菜", staples: ["米饭", "面"]}]}};
+    menu: {items: [{id: "meal-1", category: "meal", name: "主餐", priceCents: 5100, description: "完整配菜", staples: ["米饭", "面"],
+      imageUrl: "/assets/research_group/menu/2026-11-07/meal-1.jpg"}]}};
   const submitReply = deferred(); let submits = 0;
   meals.UI.api = async (module, method) => { if (method === "get_round") return round; if (method === "submit_order") {submits++; return submitReply.promise;} throw Error(method); };
   await meal.round(round.name, mealArea);
+  const image = mealArea.all().find(el => el.tag === "img"), originalCard = image.parent;
+  check(image.attr("src") === round.menu.items[0].imageUrl && !originalCard.classes.has("rg-meal-noimg"));
+  await image.trigger("error");
+  check(!mealArea.all().includes(image) && mealArea.all().includes(originalCard) && originalCard.classes.has("rg-meal-noimg"));
   const controls = mealArea.all().filter(el => el.tag === "select");
+  check(controls.length === 2 && controls.every(control => originalCard.all().includes(control) && !control.prop("disabled")));
   const ack = mealArea.all().find(el => el.tag === "input" && el.attributes.type === "checkbox");
   controls[0].val("1"); controls[0].trigger("change"); ack.prop("checked", true);
   controls[1].val("面"); controls[1].trigger("change");

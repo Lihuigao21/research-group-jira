@@ -939,8 +939,13 @@ class ResearchGroupFile(File):
         return str(path)
 
 
-def save_managed_file(filename, content, doctype, name, created_files=None):
-    if doctype == "RG Manuscript Version":
+def save_managed_file(filename, content, doctype, name, created_files=None, already_validated=False):
+    """Write a managed private file. ``already_validated`` is only for a caller
+    that ran the same validator on these exact in-memory bytes in this request;
+    it avoids parsing a manuscript PDF twice (each parse may take seconds)."""
+    if already_validated:
+        pass
+    elif doctype == "RG Manuscript Version":
         validate_manuscript(filename, content)
     else:
         validate_material(filename, content)

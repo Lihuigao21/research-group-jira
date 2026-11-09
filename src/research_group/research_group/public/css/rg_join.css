@@ -1,10 +1,56 @@
-.rg-join {max-width: 32rem; margin: 3rem auto; padding: 1.5rem; overflow-wrap: anywhere;}
-.rg-join h1 {font-size: 1.75rem; margin: 1.5rem 0 1rem;}
-.rg-join label {display: block; margin: 1.1rem 0 .4rem; font-weight: 600;}
-.rg-join input {display: block; width: 100%; min-width: 0;}
-.rg-join button {margin-top: 1.5rem; min-height: 2.75rem; white-space: normal;}
-.rg-join-links {display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem;}
-.rg-join-note {font-size: .875rem; color: var(--text-muted, #525b65); margin-top: 1.5rem;}
-#rg-join-status {min-height: 1.5rem; margin-top: 1rem; white-space: pre-wrap;}
-#rg-join-status[data-error="1"] {color: var(--red-700, #a52222);}
-@media (max-width: 390px) {.rg-join {margin: 1rem auto; padding: 1rem;} .rg-join button {width: 100%;}}
+/* Public join / password pages. Loaded only on /rg_join. */
+body:has(.rg-join) { background: radial-gradient(900px 420px at 50% -10%, #e8eefc 0%, transparent 70%), var(--bg-color, #f7f8fa); }
+[data-theme="dark"] body:has(.rg-join) { background: radial-gradient(900px 420px at 50% -10%, rgba(138, 164, 255, .14) 0%, transparent 70%), var(--bg-color); }
+.rg-join {
+  --rg-accent: #3557d4; --rg-accent-strong: #2843ad; --rg-accent-soft: #eef2fd; --rg-accent-line: #d3ddfa;
+  position: relative; max-width: 30rem; margin: 3.5rem auto; padding: 2.25rem 2rem 1.75rem; overflow-wrap: anywhere;
+  background: var(--fg-color, #fff); border: 1px solid var(--border-color, #e6e8eb); border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 12px 32px rgba(16, 24, 40, .08);
+}
+[data-theme="dark"] .rg-join { --rg-accent: #8aa4ff; --rg-accent-strong: #a9bcff; --rg-accent-soft: rgba(138, 164, 255, .12); --rg-accent-line: rgba(138, 164, 255, .32); box-shadow: none; }
+.rg-join::before {
+  content: ""; display: block; width: 48px; height: 48px; margin-bottom: 1.25rem; border-radius: 14px;
+  background: var(--rg-accent-soft); box-shadow: inset 0 0 0 1px var(--rg-accent-line);
+}
+.rg-join::after {
+  content: ""; position: absolute; left: calc(2rem + 12px); top: calc(2.25rem + 12px); width: 24px; height: 24px; background: var(--rg-accent);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%271.8%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Ccircle cx=%279%27 cy=%278%27 r=%273.5%27/%3E%3Cpath d=%27M2.5 20a6.5 6.5 0 0 1 13 0%27/%3E%3Cpath d=%27M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2A6.5 6.5 0 0 1 21.5 20%27/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%271.8%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Ccircle cx=%279%27 cy=%278%27 r=%273.5%27/%3E%3Cpath d=%27M2.5 20a6.5 6.5 0 0 1 13 0%27/%3E%3Cpath d=%27M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2A6.5 6.5 0 0 1 21.5 20%27/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.rg-join-back {
+  position: absolute; top: 1.5rem; right: 1.75rem; font-size: .8125rem; color: var(--text-muted, #6b7280); text-decoration: none;
+}
+.rg-join-back::before { content: "← "; }
+.rg-join-back:hover { color: var(--rg-accent); text-decoration: none; }
+.rg-join h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -.01em; margin: 0 0 .5rem; color: var(--heading-color, #1f2328); }
+#rg-join-intro { margin: 0 0 1.25rem; color: var(--text-muted, #6b7280); line-height: 1.7; }
+.rg-join label { display: block; margin: 1rem 0 .4rem; font-size: .8125rem; font-weight: 600; color: var(--heading-color, #1f2328); }
+.rg-join input { display: block; width: 100%; min-width: 0; height: 2.75rem; padding: .5rem .875rem; border-radius: 10px; font-size: .9375rem; }
+.rg-join input:focus { border-color: var(--rg-accent); box-shadow: 0 0 0 3px var(--rg-accent-soft); }
+.rg-join button {
+  width: 100%; margin-top: 1.5rem; min-height: 2.875rem; white-space: normal; border-radius: 10px; font-weight: 600; font-size: .9375rem;
+  background: var(--rg-accent); border-color: var(--rg-accent); color: #fff;
+}
+.rg-join button:hover:not(:disabled) { background: var(--rg-accent-strong); }
+.rg-join button:disabled { opacity: .65; }
+.rg-join-links { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color, #e6e8eb); }
+.rg-join-links a {
+  padding: .3rem .875rem; border-radius: 999px; font-size: .8125rem; text-decoration: none; color: var(--rg-accent);
+  background: var(--rg-accent-soft);
+}
+.rg-join-links a:hover { color: var(--rg-accent-strong); text-decoration: none; }
+.rg-join-note {
+  position: relative; font-size: .8125rem; line-height: 1.7; color: var(--text-muted, #525b65); margin: 1.25rem 0 0;
+  padding: .75rem .875rem .75rem 2.5rem; border-radius: 10px; background: var(--subtle-fg, #f7f8fa);
+}
+.rg-join-note::before {
+  content: ""; position: absolute; left: .875rem; top: .9rem; width: 16px; height: 16px; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%271.8%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Crect x=%274.5%27 y=%2710.5%27 width=%2715%27 height=%2710.5%27 rx=%272%27/%3E%3Cpath d=%27M8 10.5V7.5a4 4 0 0 1 8 0v3%27/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27%23000%27 stroke-width=%271.8%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Crect x=%274.5%27 y=%2710.5%27 width=%2715%27 height=%2710.5%27 rx=%272%27/%3E%3Cpath d=%27M8 10.5V7.5a4 4 0 0 1 8 0v3%27/%3E%3C/svg%3E") center / contain no-repeat;
+}
+#rg-join-status { min-height: 1.5rem; margin: 1rem 0 0; white-space: pre-wrap; font-size: .875rem; }
+#rg-join-status:not(:empty) { padding: .625rem .875rem; border-radius: 10px; background: #e8f6ee; color: #1f7a45; }
+#rg-join-status[data-error="1"] { background: #fdeeee; color: var(--red-700, #a52222); }
+@media (max-width: 480px) {
+  .rg-join { margin: 1rem auto; padding: 1.75rem 1.25rem 1.25rem; border-radius: 16px; }
+  .rg-join::after { left: calc(1.25rem + 12px); top: calc(1.75rem + 12px); }
+  .rg-join-back { right: 1.25rem; top: 1.25rem; }
+}

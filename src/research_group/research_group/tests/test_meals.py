@@ -65,7 +65,7 @@ class TestMeals(IntegrationTestCase):
         return meals.submit_order(rnd["name"], rice() if items is None else items,
                                   request_id=values.pop("request_id", frappe.generate_hash(length=16)), **values)
 
-    def test_default_7_plus_7_complete_details_and_copied_images(self):
+    def test_default_7_plus_7_complete_details(self):
         frappe.set_user(self.users["one"])
         menu = meals.default_menu()
         self.assertEqual(menu["budgetCents"], 5000)
@@ -77,7 +77,17 @@ class TestMeals(IntegrationTestCase):
         self.assertEqual(mains[6]["fixedStaple"], "鸡蛋面")
         for index, item in enumerate(mains, 1):
             self.assertTrue(item["imageUrl"].endswith(f"meal-{index}.jpg"))
-            path = Path(meals.__file__).parent / "public" / "menu" / "2026-11-07" / f"meal-{index}.jpg"
+
+    def test_default_menu_photos_are_complete_when_present(self):
+        folder = Path(meals.__file__).parent / "public" / "menu" / "2026-11-07"
+        paths = [folder / f"meal-{index}.jpg" for index in range(1, 8)]
+        present = [path.exists() or path.is_symlink() for path in paths]
+        if not any(present):
+            self.skipTest("Public snapshot omits all seven menu photos pending redistribution permission; "
+                          "menu business assertions run separately.")
+        self.assertTrue(all(present), "Menu photos are partially missing: " + ", ".join(
+            path.name for path, exists in zip(paths, present) if not exists))
+        for path in paths:
             self.assertTrue(path.read_bytes().startswith(b"\xff\xd8"))
 
     def test_secretary_drafts_publish_freeze_and_native_write_denied(self):

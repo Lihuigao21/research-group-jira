@@ -1,0 +1,59 @@
+name: checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    name: Offline source and UI checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: python scripts/check-source.py
+      - run: python scripts/check-ci-guards.py
+      - run: for f in scripts/check-*.cjs; do echo "== $f"; node "$f"; done
+
+  frappe-tests:
+    name: Frappe + MariaDB test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: offline
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_ROOT_PASSWORD: ci-root
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      redis:
+        image: redis:8
+        ports: ["6379:6379"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: MariaDB character set required by Frappe
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq mariadb-client >/dev/null
+          mariadb -h127.0.0.1 -uroot -pci-root -e "SET GLOBAL character_set_server='utf8mb4'; SET GLOBAL collation_server='utf8mb4_unicode_ci';"
+      - name: Run tests
+        env:
+          PYTHON: python
+          DB_ROOT_PASSWORD: ci-root
+          BENCH_DIR: ${{ runner.temp }}/research-group-ci-${{ github.run_id }}-${{ github.run_attempt }}
+        run: scripts/ci-frappe-tests.sh

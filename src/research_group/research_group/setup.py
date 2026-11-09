@@ -28,9 +28,9 @@ def after_install():
     website.save(ignore_permissions=True)
     frappe.db.set_default("lang", "zh")
     frappe.db.set_default("suspend_email_queue", 1)
-    from research_group.ai.security import install_state
-    install_state()
-    harden_accounts()
+    # install-app alone must already carry the database uniqueness barriers and
+    # the AI gate row; a later migrate repeats this idempotently.
+    after_migrate()
 
 
 def after_migrate():
