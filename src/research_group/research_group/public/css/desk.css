@@ -17,11 +17,19 @@
   border: 1px solid var(--border-color, #e6e8eb); border-radius: 10px; cursor: pointer;
   overflow-wrap: anywhere; white-space: normal; transition: border-color .12s, background-color .12s;
 }
-.rg-survey-choice label:hover { border-color: var(--gray-400, #b6bec8); }
-.rg-survey-choice label:has(input:checked) { border-color: var(--primary, #171717); background: var(--subtle-fg, #f7f8fa); }
-.rg-survey-choice input { margin: 3px 0 0 !important; flex: none; position: static !important; }
+.rg-survey-choice { --rg-choice: #315dc8; --rg-choice-bg: #eaf0ff; --rg-choice-text: #203451; }
+[data-theme="dark"] .rg-survey-choice { --rg-choice: #8aa4ff; --rg-choice-bg: #243449; --rg-choice-text: #e3ebf8; }
+.rg-survey-choice label:hover { border-color: var(--rg-choice); }
+.rg-survey-choice label:has(input:checked) { border-color: var(--rg-choice); background: var(--rg-choice-bg); color: var(--rg-choice-text); }
+.rg-survey-choice label:focus-within { outline: 2px solid var(--rg-choice); outline-offset: 2px; }
+.rg-survey-choice input { margin: 3px 0 0 !important; flex: none; position: static !important; accent-color: var(--rg-choice); }
+/* Frappe paints these controls with appearance:none; retain its check mark and radio shape. */
+.rg-survey-choice input[type="checkbox"]:checked,
+[data-theme="dark"] .rg-survey-choice input[type="checkbox"]:checked { background-color: var(--rg-choice); }
+.rg-survey-choice input[type="radio"]:checked::before { background-color: var(--rg-choice); }
 .rg-survey-answer { padding: 10px 12px; border-radius: 10px; background: var(--subtle-fg, #f7f8fa); }
 @media (max-width: 480px) {
   .rg-responsive-table table { font-size: 12px; }
   .modal-dialog .control-label { white-space: normal; }
 }
+@media (prefers-reduced-motion: reduce) { .rg-survey-choice label { transition: none; } }

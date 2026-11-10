@@ -85,7 +85,6 @@
       const body = $("<div class='rg-portal'></div>").appendTo(root);
       const header = $("<header class='rg-portal-header'></header>").appendTo(body);
       const intro = $("<div></div>").appendTo(header);
-      $("<span class='rg-portal-eyebrow'></span>").text("课题组协作").appendTo(intro);
       $("<h2></h2>").text(title).appendTo(intro);
       $("<p></p>").text("使用同一账号协作，资料按当前权限显示。").appendTo(intro);
       const select = $("<select class='form-control rg-portal-role' aria-label='切换工作台'></select>").appendTo(header);
@@ -96,7 +95,7 @@
     },
     tabs(parent, labels, render) {
       const tabs = $("<div class='rg-portal-tabs' role='tablist'></div>").appendTo(parent);
-      const area = $("<div></div>").appendTo(parent);
+      const area = $("<div class='rg-portal-tab-content'></div>").appendTo(parent);
       let epoch = 0;
       labels.forEach((label, index) => {
         const button = UI.button(tabs, label, async () => {
@@ -123,7 +122,7 @@
         const {body, data} = shell;
         if (data.introduction) UI.text(body, data.introduction, "rg-portal-text rg-portal-intro");
         if (data.announcements.length) {
-          const section = UI.section(body, "课题组公告");
+          const section = UI.section(body, "课题组公告").addClass("rg-portal-announcements");
           const cards = $("<div class='rg-portal-cards'></div>").appendTo(section);
           data.announcements.forEach(item => { const card = $("<article class='rg-portal-card'></article>").appendTo(cards);
             $("<h4></h4>").text(item.title).appendTo(card);
