@@ -1,5 +1,64 @@
 /* Native Desk helpers; no replacement authentication or client-only permissions. */
 window.research_group = window.research_group || {};
+(() => {
+  const boot = frappe.boot || {};
+  const home = boot.research_group_home_route;
+  const portals = boot.research_group_portals || [];
+  const setupComplete = boot.sysdefaults?.setup_complete ?? boot.setup_complete;
+  // Also runs before a sidebar is rebuilt from a fresh customization payload.
+  const normalizeNavigation = () => {
+    if (!home || !setupComplete) return;
+    frappe.re_route = frappe.re_route || {};
+    const aliases = {"": home, "research-group": home, "课题组协作": home,
+      "research-group/课题组协作": home, "Workspaces/课题组协作": home};
+    portals.forEach(item => {
+      aliases[item.title] = item.route;
+      aliases["research-group/" + item.title] = item.route;
+      aliases["Workspaces/" + item.title] = item.route;
+    });
+    const destinations = {"课题组协作": home, ...Object.fromEntries(portals.map(item => [item.title, item.route]))};
+    Object.entries(boot.module_sidebars || {}).forEach(([shell, sidebar]) => {
+      const slug = frappe.router.shell_slug(shell);
+      // /private/<title> identifies a user's own page, even if its title matches.
+      if (slug === "private") return;
+      (sidebar.items || []).forEach(item => {
+        if (item.link_type === "Workspace" && Object.hasOwn(destinations, item.link_to)) {
+          aliases[slug + "/" + item.link_to] = destinations[item.link_to];
+        }
+      });
+    });
+    Object.entries(aliases).forEach(([from, to]) => {
+      frappe.re_route[from] = to;
+      if (from) frappe.re_route[from + "/"] = to;
+    });
+    const sidebar = boot.module_sidebars?.["Research Group"];
+    if (!sidebar) return;
+    const routes = portals.map(item => item.route);
+    const original = sidebar.items || [];
+    const first = original.filter(item => item.link_type === "Page" && routes.includes(item.link_to))
+      .map(item => ({...item, child: 0})).sort((a, b) => routes.indexOf(a.link_to) - routes.indexOf(b.link_to));
+    const rest = original.filter(item => !(item.link_type === "Workspace" && Object.hasOwn(destinations, item.link_to)) &&
+      !(item.link_type === "Page" && routes.includes(item.link_to)));
+    boot.module_sidebars["Research Group"] = {...sidebar, items: [...first, ...rest],
+      workspaces: (sidebar.workspaces || []).filter(name => !Object.hasOwn(destinations, name))};
+  };
+  // Register before the initial router.parse(), including bookmarked old URLs.
+  normalizeNavigation();
+  $(document).on("sidebar_setup", normalizeNavigation);
+  const pages = new Set(["rg-teacher-portal", "rg-secretary-portal", "rg-student-portal",
+    "rg-accounts", "rg-meals", "rg-manuscripts", "rg-ai-assistant"]);
+  const reports = new Set(["RG Teacher Overview", "RG Student Timeline", "RG Secretary Schedule"]);
+  const syncTheme = () => {
+    const route = frappe.get_route() || [];
+    const group = pages.has(route[0]) || (!route[0] && !!home) ||
+      (["List", "Form", "Tree"].includes(route[0]) && /^RG /.test(route[1] || "")) ||
+      (route[0] === "query-report" && reports.has(route[1]));
+    document.body.classList.toggle("rg-desk", group);
+  };
+  frappe.router.on("change", syncTheme);
+  $(document).on("app_ready page-change", syncTheme);
+  syncTheme();
+})();
 Object.assign(window.research_group, {
   has_role(role) {
     return (frappe.boot.research_group_roles || []).includes(role);

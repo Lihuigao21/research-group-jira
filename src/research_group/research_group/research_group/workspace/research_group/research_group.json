@@ -7,7 +7,7 @@
   "type": "Workspace",
   "public": 1,
   "standard": 1,
-  "is_hidden": 0,
+  "is_hidden": 1,
   "icon": "project",
   "sequence_id": 1,
   "roles": [

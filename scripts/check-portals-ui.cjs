@@ -87,10 +87,12 @@ const tick = () => new Promise(resolve => setImmediate(resolve));
 
   // Website inclusion never assumes Desk boot exists; the native forgot link
   // is replaced before it can send a different Guest reset request.
+  const loginClasses = new Set();
   const loginContext = {window: {location: {pathname: "/login", hash: "#forgot", replace(value) {this.target = value;}}, addEventListener() {}},
-    document: {readyState: "complete"}};
+    document: {readyState: "complete", body: {classList: {add(name) {loginClasses.add(name);}}}}};
   vm.createContext(loginContext); vm.runInContext(fs.readFileSync(path.join(app, "accounts.js"), "utf8"), loginContext);
   check(loginContext.window.location.target === "/rg_join?mode=reset");
+  check(loginClasses.has("rg-web"));
 
   const accounts = environment(), area = new Element();
   const instance = Object.create(accounts.rg.AccountsPage.prototype);

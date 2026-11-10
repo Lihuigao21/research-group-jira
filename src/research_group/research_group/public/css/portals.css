@@ -1,32 +1,11 @@
 /* Research Group portal pages (role workspaces, meals, manuscripts, accounts).
- * Visual layer only: every rule is scoped to .rg-portal so native Desk pages keep Frappe's look.
- * Light and dark palettes are explicit; no global Desk overrides. */
+ * Shared light/dark colors live in theme.css; portal layout and controls stay scoped. */
 .rg-portal {
-  --rg-accent: #315dc8; --rg-accent-strong: #24499f; --rg-accent-soft: #eaf0ff; --rg-accent-line: #c9d7f4;
-  --rg-ink: #203451; --rg-text: #344761; --rg-muted: #596b82;
-  --rg-surface: #fff; --rg-subtle: #f1f5fa; --rg-canvas: #edf2f8; --rg-line: #d6e0ed;
-  --rg-teal: #146f6d; --rg-teal-soft: #e6f4f1; --rg-amber: #956018; --rg-amber-soft: #fff2dd;
-  --rg-header: #203e6a; --rg-header-text: #fff; --rg-header-muted: #d5e2f4;
-  --rg-on-accent: #fff;
-  --rg-ok: #1f7a45; --rg-ok-soft: #e8f6ee; --rg-warn: #9a5800; --rg-warn-soft: #fff4df;
-  --rg-danger: #b42323; --rg-danger-soft: #fdeeee;
-  --rg-radius: 14px; --rg-radius-sm: 8px;
-  --rg-shadow: 0 2px 5px rgba(30, 55, 90, .04);
-  --rg-shadow-hover: 0 5px 14px rgba(30, 55, 90, .09);
   max-width: 1120px; margin: 16px auto; padding: 24px 24px 40px; color: var(--rg-text);
   background: var(--rg-canvas); border-radius: 20px;
   font-size: 13.5px; line-height: 1.6;
 }
-[data-theme="dark"] .rg-portal {
-  --rg-accent: #8aa4ff; --rg-accent-strong: #a9bcff; --rg-accent-soft: rgba(138, 164, 255, .12); --rg-accent-line: rgba(138, 164, 255, .32);
-  --rg-ink: #e3ebf8; --rg-text: #c5d2e5; --rg-muted: #a5b5cd;
-  --rg-surface: #1c293b; --rg-subtle: #243449; --rg-canvas: #152132; --rg-line: #3a4d66;
-  --rg-teal: #80d6cc; --rg-teal-soft: #203e42; --rg-amber: #f0c384; --rg-amber-soft: #453b2b;
-  --rg-header: #243f66; --rg-on-accent: #11213d;
-  --rg-ok: #6fd39b; --rg-ok-soft: rgba(111, 211, 155, .12); --rg-warn: #f3b553; --rg-warn-soft: rgba(243, 181, 83, .12);
-  --rg-danger: #ff8a8a; --rg-danger-soft: rgba(255, 138, 138, .12);
-  --rg-shadow: none; --rg-shadow-hover: 0 4px 14px rgba(0, 0, 0, .35);
-}
+
 .rg-portal * { box-sizing: border-box; }
 .rg-portal ::selection { background: var(--rg-accent-line); color: inherit; }
 .rg-portal :focus-visible { outline: 2px solid var(--rg-accent); outline-offset: 2px; }

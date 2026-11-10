@@ -2,6 +2,7 @@
   // Also loaded by Website Settings on the native login page. Keep this small
   // enhancement independent of Desk boot, jQuery and the portal bundle.
   const enhanceLogin = () => {
+    if (["/login", "/rg_join"].includes(window.location.pathname.replace(/\/$/, ""))) document.body.classList.add("rg-web");
     if (window.location.pathname.replace(/\/$/, "") !== "/login") return;
     if (window.location.hash === "#forgot") { window.location.replace("/rg_join?mode=reset"); return; }
     document.querySelectorAll('a[href="#forgot"]').forEach(link => { link.href = "/rg_join?mode=reset"; });

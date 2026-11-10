@@ -1,0 +1,28 @@
+/* Authentication keeps the native Frappe form, CSRF and submission flow. */
+body.rg-web { min-height: 100vh; }
+body.rg-web :is(.navbar, .web-footer) { background: var(--rg-surface); border-color: var(--rg-line); }
+body.rg-web .navbar a { color: var(--rg-ink); }
+body.rg-web .page_content { padding-bottom: 32px; }
+body.rg-web .for-login { padding-top: 32px; }
+body.rg-web .page-card-head { margin-bottom: 24px; }
+body.rg-web .page-card-head h4 { font-size: 26px; font-weight: 700; letter-spacing: -.02em; color: var(--rg-ink); }
+body.rg-web .page-card-head .app-logo { max-height: 48px; }
+body.rg-web .page-card {
+  max-width: 480px; padding: 28px 32px; border: 1px solid var(--rg-line); border-radius: 16px;
+  background: var(--rg-surface); box-shadow: none;
+}
+body.rg-web .page-card .form-control { height: 44px; border-radius: 8px; }
+body.rg-web .for-login .page-card .page-card-body input:is([type="email"], [type="text"], [type="password"]) { background: var(--rg-surface); color: var(--rg-text); border: 1px solid var(--rg-line); }
+body.rg-web .for-login .page-card .page-card-body input:focus { border-color: var(--rg-accent); }
+body.rg-web .page-card .page-card-body { padding: 0; }
+body.rg-web .page-card .page-card-actions { margin-top: 24px; }
+body.rg-web .page-card .btn { min-height: 44px; border-radius: 8px; font-size: 14px; }
+body.rg-web .page-card :is(.forgot-password-message a, .sign-up-message a) { color: var(--rg-accent); }
+body.rg-web #rg-join-link { margin: 22px auto; font-size: 14px; }
+body.rg-web #rg-join-link a { color: var(--rg-accent); text-decoration: underline; text-underline-offset: 4px; }
+body.rg-web .rg-join { box-shadow: none; }
+@media (max-width: 480px) {
+  body.rg-web .for-login { padding-top: 16px; }
+  body.rg-web .page-card { padding: 24px 20px; }
+  body.rg-web .page-card-head h4 { font-size: 24px; }
+}

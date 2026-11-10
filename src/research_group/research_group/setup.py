@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import frappe
 
 from research_group.policy import ROLES, roles
@@ -114,8 +116,40 @@ def harden_accounts():
 
 
 def boot_session(bootinfo):
-    bootinfo.research_group_roles = sorted(roles())
+    assigned = roles()
+    bootinfo.research_group_roles = sorted(assigned)
     bootinfo.research_group_demo = bool(frappe.conf.get("rg_demo"))
+    if not assigned or not (bootinfo.get("sysdefaults") or {}).get("setup_complete"):
+        return
+    from research_group.portals import PORTALS
+
+    available = [dict(item) for item in PORTALS.values() if item["role"] in assigned]
+    bootinfo.research_group_portals = available
+    bootinfo.research_group_home_route = available[0]["route"]
+    bootinfo.home_page = available[0]["route"]
+
+    # The standard shortcut-only Workspaces duplicate the real role Pages.
+    # Change this boot payload, not cached shared navigation or saved user data.
+    legacy = {"课题组协作", *(item["title"] for item in PORTALS.values())}
+    workspace_info = deepcopy(bootinfo.get("workspaces") or {})
+    removed = {item["name"] for item in workspace_info.get("pages", [])
+               if item.get("name") in legacy and item.get("module") == "Research Group"
+               and item.get("standard")}
+    # Keep workspace metadata so links from user-created shells still parse.
+    # Exact frontend aliases lead old bookmarks to the real role Pages.
+    sidebars = deepcopy(bootinfo.get("module_sidebars") or {})
+    sidebar = sidebars.get("Research Group")
+    if sidebar:
+        routes = {item["route"] for item in available}
+        items = sidebar.get("items", [])
+        portals = [{**item, "child": 0} for item in items
+                   if item.get("link_type") == "Page" and item.get("link_to") in routes]
+        portals.sort(key=lambda item: [value["route"] for value in available].index(item["link_to"]))
+        sidebar["items"] = portals + [item for item in items
+            if not (item.get("link_type") == "Workspace" and item.get("link_to") in removed)
+            and not (item.get("link_type") == "Page" and item.get("link_to") in routes)]
+        sidebar["workspaces"] = [name for name in sidebar.get("workspaces", []) if name not in removed]
+        bootinfo.module_sidebars = sidebars
 
 
 def set_guest_language():

@@ -4,7 +4,7 @@ app_publisher = "Research Group"
 app_description = "课题进展、预约讨论和组会材料"
 app_email = "noreply@example.invalid"
 app_license = "mit"
-app_home = "/desk/research-group/课题组协作"
+app_home = "/desk"
 add_to_apps_screen = [{
     "name": app_name,
     "title": app_title,
@@ -13,10 +13,11 @@ add_to_apps_screen = [{
     "sequence_id": 1,
 }]
 required_apps = ["frappe"]
-app_include_css = ["/assets/research_group/css/desk.css", "/assets/research_group/css/ai_assistant.css",
+app_include_css = ["/assets/research_group/css/theme.css", "/assets/research_group/css/desk.css", "/assets/research_group/css/ai_assistant.css",
                    "/assets/research_group/css/portals.css"]
 app_include_js = "/assets/research_group/js/desk.js"
 web_include_js = ["/assets/research_group/js/accounts.js"]
+web_include_css = ["/assets/research_group/css/theme.css", "/assets/research_group/css/web.css"]
 before_install = "research_group.setup.before_install"
 after_install = "research_group.setup.after_install"
 after_migrate = "research_group.setup.after_migrate"

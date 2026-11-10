@@ -2,16 +2,11 @@
 body:has(.rg-join) { background: #edf2f8; }
 [data-theme="dark"] body:has(.rg-join) { background: #152132; }
 .rg-join {
-  --rg-accent: #315dc8; --rg-accent-strong: #24499f; --rg-accent-soft: #eaf0ff; --rg-accent-line: #c9d7f4;
-  --rg-ink: #203451; --rg-text: #344761; --rg-muted: #596b82; --rg-surface: #fff; --rg-line: #d6e0ed; --rg-on-accent: #fff;
   position: relative; max-width: 32rem; margin: 3rem auto; padding: 2.25rem 2rem 1.75rem; overflow-wrap: anywhere;
   background: var(--rg-surface); color: var(--rg-text); border: 1px solid var(--rg-line); border-radius: 16px;
   box-shadow: 0 12px 36px rgba(30, 55, 90, .08);
 }
-[data-theme="dark"] .rg-join {
-  --rg-accent: #8aa4ff; --rg-accent-strong: #a9bcff; --rg-accent-soft: rgba(138, 164, 255, .12); --rg-accent-line: rgba(138, 164, 255, .32);
-  --rg-ink: #e3ebf8; --rg-text: #c5d2e5; --rg-muted: #a5b5cd; --rg-surface: #1c293b; --rg-line: #3a4d66; --rg-on-accent: #11213d; box-shadow: none;
-}
+
 .rg-join :focus-visible { outline: 2px solid var(--rg-accent); outline-offset: 3px; }
 .rg-join::before {
   content: ""; display: block; width: 48px; height: 48px; margin-bottom: 1.25rem; border-radius: 14px;
