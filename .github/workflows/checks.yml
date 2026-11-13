@@ -32,7 +32,7 @@ jobs:
     needs: offline
     services:
       mariadb:
-        image: mariadb:11.8
+        image: mariadb:11.8.3
         env:
           MARIADB_ROOT_PASSWORD: ci-root
         ports: ["3306:3306"]
@@ -50,7 +50,8 @@ jobs:
       - name: MariaDB character set required by Frappe
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq mariadb-client >/dev/null
-          mariadb -h127.0.0.1 -uroot -pci-root -e "SET GLOBAL character_set_server='utf8mb4'; SET GLOBAL collation_server='utf8mb4_unicode_ci';"
+          mariadb -h127.0.0.1 -uroot -pci-root -e "SET GLOBAL character_set_server='utf8mb4'; SET GLOBAL collation_server='utf8mb4_unicode_ci'; SET GLOBAL innodb_snapshot_isolation=OFF;"
+          test "$(mariadb -h127.0.0.1 -uroot -pci-root -NBe 'SELECT @@GLOBAL.innodb_snapshot_isolation')" = 0
       - name: Run tests
         env:
           PYTHON: python
