@@ -34,7 +34,7 @@ def execute(suite):
     import role_http as h
     h.RESULTS = []
     if suite == "fixtures":
-        request = {"site": ctx.site, "base": ctx.base}
+        request = {"site": ctx.site, "base": ctx.base, "expected_db_name": ctx.expected_db_name}
         source = (SOURCE / "prepare-fixtures.py").read_bytes().decode("utf-8")
         value = cfg.private_python(source + "\nprint(json.dumps(prepare(" + repr(request) + ")))\n")
         if not value.get("ok"):
@@ -67,6 +67,7 @@ def main():
     parser.add_argument("--credentials", type=Path, required=True, help="private JSON; never printed")
     parser.add_argument("--container", required=True, help="separate candidate backend container")
     parser.add_argument("--site", default="lab.localhost")
+    parser.add_argument("--expected-db-name", help="exact generated database name for an independently verified candidate")
     parser.add_argument("--task-dir", type=Path, required=True, help="current project tasks/<task> output root")
     parser.add_argument("--attempt", default=datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + secrets.token_hex(4))
     parser.add_argument("--check-paths", action="store_true", help="validate CLI/private input/output paths only; no runtime calls or writes")

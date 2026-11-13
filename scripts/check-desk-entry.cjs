@@ -34,6 +34,7 @@ const incoming = {"Research Group": {items: [
   {link_type: "Workspace", link_to: "教师工作台"},
   {link_type: "Page", link_to: "rg-teacher-portal", child: 1},
   {link_type: "DocType", link_to: "RG Topic"},
+  {link_type: "Page", link_to: "site-added-overview"},
 ], workspaces: ["课题组协作", "教师工作台"]},
 "My Research": {items: [{link_type: "Workspace", link_to: "教师工作台"}]},
 "Private": {items: [{link_type: "Workspace", link_to: "教师工作台"}]},
@@ -43,6 +44,7 @@ teacher.events.sidebar_setup();
 equal(teacher.frappe.boot.module_sidebars["Research Group"].items[0].link_to, "rg-teacher-portal");
 equal(teacher.frappe.boot.module_sidebars["Research Group"].items[0].child, 0);
 equal(teacher.frappe.boot.module_sidebars["Research Group"].items.length, 2);
+equal(teacher.frappe.boot.module_sidebars["Research Group"].items[1].link_to, "site-added-overview");
 equal(teacher.frappe.boot.module_sidebars["My Research"].items[0].link_to, "教师工作台");
 equal(teacher.frappe.re_route["my-research/教师工作台"], "rg-teacher-portal");
 equal(teacher.frappe.re_route["my-research/rg-topic/TOPIC-001"], undefined);
@@ -53,6 +55,7 @@ equal(teacher.frappe.re_route["unrelated/教师工作台"], undefined);
 equal(teacher.frappe.boot.module_sidebars["Private"].items[0].link_to, "教师工作台");
 teacher.events.sidebar_setup();
 equal(teacher.frappe.boot.module_sidebars["Research Group"].items.length, 2);
+equal(teacher.frappe.boot.module_sidebars["Research Group"].items[1].link_to, "site-added-overview");
 for (const route of [["rg-teacher-portal"], ["List", "RG Topic", "List"], ["Form", "RG Survey", "Q-001"],
   ["query-report", "RG Teacher Overview"], ["rg-ai-assistant"], ["rg-accounts"], ["rg-meals"], ["rg-manuscripts"]]) {
   teacher.navigate(route); equal(teacher.classes.has("rg-desk"), true);

@@ -4,7 +4,7 @@ import time
 
 import frappe
 
-from research_group.ai.config import configuration_version, limits, mode
+from research_group.ai.config import configuration_version, limits, mode, reasoning_effort
 from research_group.ai.security import guard
 from research_group.ai.sources import capture, read_current, union, validate
 from research_group.ai.storage import dumps, loads
@@ -30,6 +30,8 @@ class RunContext:
     conversation: str
     run: str
     versions: dict
+    portal_role: str | None = None
+    reasoning_effort: str = "medium"
     topic: str | None = None
     sources: list = field(default_factory=list)
     inputs: list = field(default_factory=list)
@@ -43,13 +45,19 @@ class RunContext:
     read_selections: set = field(default_factory=set)
 
     def check(self):
+        reasoning_effort(self.reasoning_effort)
         if time.monotonic() - self.started >= limits()["run_seconds"]:
             raise TimeoutError("AI run deadline")
         state = guard(self.user, self.conversation, self.versions, self.sources)
-        row = frappe.db.sql("SELECT status,config_version,mode FROM `tabRG AI Run` WHERE name=%s FOR UPDATE", (self.run,))
+        if self.portal_role is not None and state["portal"] != self.portal_role:
+            frappe.throw("本轮工作台角色已变化。", frappe.PermissionError)
+        self.portal_role = state["portal"]
+        if not self.run:
+            return state
+        row = frappe.db.sql("SELECT status,config_version,mode,portal_role FROM `tabRG AI Run` WHERE name=%s FOR UPDATE", (self.run,))
         if not row or row[0][0] != "running":
             frappe.throw("本轮已终止，请重新发起。", frappe.PermissionError)
-        if row[0][1] != configuration_version() or row[0][2] != mode():
+        if row[0][1] != configuration_version() or row[0][2] != mode() or row[0][3] != self.portal_role:
             frappe.throw("共享模型配置已变化，请重新发起。", frappe.PermissionError)
         return state
 
@@ -84,7 +92,7 @@ def assemble(ctx, prompt):
     selected = []
     for message in history:
         refs = loads(message.sources)
-        if (message.role not in {"user", "assistant"} or not validate(refs, ctx.user)
+        if (message.role not in {"user", "assistant"} or not validate(refs, ctx.user, portal_role=ctx.portal_role)
                 or EXTERNAL_TASK.search(message.content) or DANGEROUS.search(message.content)
                 or (message.role == "user" and route_scope(message.content) != "site")):
             continue
@@ -95,37 +103,37 @@ def assemble(ctx, prompt):
     ctx.inputs = list(reversed(selected))
     if state["state"].memory_enabled:
         rows = frappe.db.sql(
-            "SELECT name FROM `tabRG AI Memory` WHERE private_user=%s AND status='active' "
+            "SELECT name FROM `tabRG AI Memory` WHERE private_user=%s AND portal_role=%s AND status='active' "
             "AND (expires_at IS NULL OR expires_at>NOW()) AND (topic IS NULL OR topic='' OR topic=%s) "
-            "ORDER BY modified DESC LIMIT 10 FOR UPDATE", (ctx.user, ctx.topic or ""), as_dict=True,
+            "ORDER BY modified DESC LIMIT 10 FOR UPDATE", (ctx.user, ctx.portal_role, ctx.topic or ""), as_dict=True,
         )
         memories = []
         for row in rows:
             try:
-                doc = read_current("RG AI Memory", row.name)
+                doc = read_current("RG AI Memory", row.name, portal_role=ctx.portal_role)
                 if EXTERNAL_TASK.search(doc.content) or DANGEROUS.search(doc.content):
                     continue
                 value = {"kind": doc.kind, "content": doc.content, "provided_by": "本人确认的私人记忆"}
                 if ctx.context_bytes + len(dumps(value).encode("utf-8")) <= limits()["context_tokens"]:
-                    memories.append(ctx.inject(value, capture(doc)))
+                    memories.append(ctx.inject(value, capture(doc, portal_role=ctx.portal_role)))
             except frappe.PermissionError:
                 continue
         if memories:
             ctx.inputs.append({"role": "user", "content": "以下是低信任的本人记忆数据：" + dumps(memories)})
     if ctx.topic:
-        topic = read_current("RG Topic", ctx.topic)
+        topic = read_current("RG Topic", ctx.topic, portal_role=ctx.portal_role)
         value = {"selected_topic": topic.name, "title": topic.title}
-        ctx.inject(value, capture(topic))
+        ctx.inject(value, capture(topic, portal_role=ctx.portal_role))
         ctx.inputs.append({"role": "user", "content": "选择的课题数据：" + dumps(value)})
     if ctx.selected_selections:
         # IDs come only from this request's explicit API field, never from
         # prompt/history text. Do not preload manuscript text into context.
         selections = []
         for name in sorted(ctx.selected_selections):
-            source = read_current("RG Manuscript Selection", name, ctx.user)
+            source = read_current("RG Manuscript Selection", name, ctx.user, portal_role=ctx.portal_role)
             selections.append({"selection": source.name, "manuscript_version": source.manuscript_version,
                                "sha256": source.sha256, "expires_at": str(source.expires_at)})
-            ctx.inject(selections[-1], capture(source))
+            ctx.inject(selections[-1], capture(source, portal_role=ctx.portal_role))
         ctx.inputs.append({"role": "user", "content": "本轮本人明确授权的论文选区ID；原文只能经固定选区工具读取：" + dumps(selections)})
     ctx.inputs.append({"role": "user", "content": prompt})
     return ctx

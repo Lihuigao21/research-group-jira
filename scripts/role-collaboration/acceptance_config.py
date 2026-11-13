@@ -70,6 +70,7 @@ class Context:
     site: str
     task_dir: Path
     attempt: str
+    expected_db_name: str | None = None
 
     @property
     def records(self):
@@ -86,7 +87,8 @@ class Context:
 
     def namespace(self):
         return SimpleNamespace(base=self.base, credentials=self.credentials_path, container=self.container,
-                               site=self.site, task_dir=self.task_dir, attempt=self.attempt)
+                               site=self.site, task_dir=self.task_dir, attempt=self.attempt,
+                               expected_db_name=self.expected_db_name)
 
     def begin(self):
         # Reserve the identity before any HTTP/container operation. A failed
@@ -115,7 +117,11 @@ def configure(args):
         raise ValueError("Select a separate candidate container, not the original application")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,99}", args.site) or ".." in args.site:
         raise ValueError("Site must be a single safe Frappe site name")
-    context = Context(base_url(args.base), private_path, args.container, args.site, task, safe_slug(args.attempt))
+    expected_db_name = args.expected_db_name
+    if expected_db_name is not None and not re.fullmatch(r"_[0-9a-f]{16}", expected_db_name):
+        raise ValueError("Expected candidate database name must be an exact generated identifier")
+    context = Context(base_url(args.base), private_path, args.container, args.site, task,
+                      safe_slug(args.attempt), expected_db_name)
     if context.records.exists() or context.scratch.exists():
         raise ValueError("Attempt already exists; preserve it and choose a fresh name")
     install_localhost_ipv4_priority()
@@ -167,7 +173,8 @@ def private_python(source):
 
 def preflight():
     ctx = current()
-    request = {"action": "preflight", "prefix": "rgah" + secrets.token_hex(5), "site": ctx.site, "base": ctx.base}
+    request = {"action": "preflight", "prefix": "rgah" + secrets.token_hex(5), "site": ctx.site,
+               "base": ctx.base, "expected_db_name": ctx.expected_db_name}
     source = (SOURCE / "accounts-http-fixture.py").read_bytes().decode("utf-8")
     admission = '''
 def offline_admission(request):

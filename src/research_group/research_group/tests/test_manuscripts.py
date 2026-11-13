@@ -742,7 +742,7 @@ class TestManuscripts(IntegrationTestCase):
 
         # Use the actual independent preview/confirmation transaction, rather
         # than calling save_ai_suggestion directly or changing stored hashes.
-        conversation = api.create_conversation()["name"]
+        conversation = api.create_conversation("student")["name"]
         state = guard(conversation=conversation)
         context = RunContext(self.users["one"], conversation, "", state["versions"])
         pending = propose(context, "manuscript_suggestion", {

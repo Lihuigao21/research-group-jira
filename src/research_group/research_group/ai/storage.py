@@ -44,8 +44,18 @@ class PrivateDocument(Document):
             deny()
         if self.site != frappe.local.site:
             deny()
-        if not self.is_new() and self.private_user != self.get_doc_before_save().private_user:
+        if self.portal_role not in {"teacher", "secretary", "student", "legacy", "site"}:
             deny()
+        if not self.is_new():
+            before = self.get_doc_before_save()
+            if (self.private_user, self.portal_role) != (before.private_user, before.portal_role):
+                deny()
+        if self.doctype in {"RG AI Message", "RG AI Memory", "RG AI Plan", "RG AI Operation", "RG AI Run"}:
+            if self.conversation:
+                parent = frappe.db.get_value("RG AI Conversation", self.conversation,
+                                             ["private_user", "portal_role"], as_dict=True)
+                if not parent or (parent.private_user, parent.portal_role) != (self.private_user, self.portal_role):
+                    deny()
 
     def on_trash(self):
         # 专用删除走清空正文/删除清单，不让 Deleted Document 保存副本。
@@ -65,6 +75,12 @@ def save(doc, new=False):
 
 
 def insert(doctype, user, **values):
+    if "portal_role" not in values:
+        conversation = values.get("conversation")
+        if conversation:
+            values["portal_role"] = frappe.db.get_value("RG AI Conversation", conversation, "portal_role")
+        if not values.get("portal_role"):
+            deny()
     return save(frappe.get_doc({"doctype": doctype, "site": frappe.local.site,
                                "private_user": user, **values}), new=True)
 
@@ -103,11 +119,14 @@ def require_capacity(user, addition=0):
     return {"user_bytes": own, "site_bytes": total, "user_limit": cap["user_bytes"]}
 
 
-def journal_targets(user, targets):
+def journal_targets(user, targets, portal=None):
     """恢复前须重放最新清单；清单不含被删除正文或其内容摘要。"""
     if not targets:
         return
-    entry = {"site": frappe.local.site, "user": user, "deleted_at": str(now_datetime()), "targets": []}
+    if portal is None:
+        portal = frappe.db.get_value(targets[0][0], targets[0][1], "portal_role")
+    entry = {"site": frappe.local.site, "user": user, "portal": portal,
+             "deleted_at": str(now_datetime()), "targets": []}
     overhead = len((dumps(entry) + "\n").encode("utf-8"))
     path = Path(frappe.get_site_path("private", "rg-ai-deletions.jsonl"))
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -138,7 +157,7 @@ def journal_targets(user, targets):
         identifier = hashlib.sha256((doctype + ":" + name).encode()).hexdigest()[:32]
         if not frappe.db.exists("RG AI Tombstone", identifier):
             insert("RG AI Tombstone", user, name=identifier, target_doctype=doctype,
-                   target_name=name, deleted_at=now_datetime())
+                   target_name=name, portal_role=portal or "legacy", deleted_at=now_datetime())
 
 
 def clear_target(doctype, name, user):

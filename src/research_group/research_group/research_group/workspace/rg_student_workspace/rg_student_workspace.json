@@ -36,7 +36,7 @@
     },
     {
       "label": "我的 AI 助手",
-      "link_to": "rg-ai-assistant",
+      "link_to": "rg-student-agent",
       "type": "Page",
       "color": "Blue"
     },

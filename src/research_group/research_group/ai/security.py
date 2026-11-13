@@ -8,14 +8,33 @@ import frappe
 from frappe.utils import now_datetime
 
 from research_group.ai.storage import insert
-from research_group.policy import ROLES, deny
+from research_group.policy import ROLES, SECRETARY, STUDENT, TEACHER, deny
 
 GLOBAL = "rg-ai-site"
+PORTAL_ROLES = {"teacher": TEACHER, "secretary": SECRETARY, "student": STUDENT}
+LEGACY = "legacy"
 
 
 def install_state():
     if not frappe.db.exists("RG AI State", GLOBAL):
-        insert("RG AI State", "", name=GLOBAL, context_version=1, auth_version=1, memory_enabled=0)
+        insert("RG AI State", "", name=GLOBAL, portal_role="site", context_version=1,
+               auth_version=1, memory_enabled=0)
+
+
+def migrate_legacy_roles():
+    """Classify pre-workspace rows without rewriting their private text.
+
+    Run after DocType synchronization. A blank role is never interpreted as a
+    current workspace, even if this user's present role list has one entry.
+    """
+    for doctype in ("RG AI Conversation", "RG AI Message", "RG AI Memory", "RG AI Plan",
+                    "RG AI Operation", "RG AI Run", "RG AI Tombstone", "RG AI State"):
+        frappe.db.sql(f"UPDATE `tab{doctype}` SET portal_role=%s WHERE portal_role IS NULL OR portal_role=''",
+                      (LEGACY,))
+    frappe.db.sql("UPDATE `tabRG AI State` SET portal_role='site' WHERE name=%s", (GLOBAL,))
+    # A pre-upgrade queued worker cannot publish into a new role workspace.
+    frappe.db.sql("UPDATE `tabRG AI Run` SET status='cancelled',error_class='legacy_read_only',finished_at=%s "
+                  "WHERE portal_role=%s AND status IN ('queued','running')", (now_datetime(), LEGACY))
 
 
 def global_lock():
@@ -51,12 +70,21 @@ def release_execution(user):
     frappe.db.sql("SELECT RELEASE_LOCK(%s)", (execution_key(),))
 
 
-def user_state(user):
-    name = hashlib.sha256(("user:" + user).encode()).hexdigest()[:32]
+def user_state(user, portal):
+    if type(portal) is not str or portal not in PORTAL_ROLES:
+        deny()
+    name = hashlib.sha256(("user:" + user + ":" + portal).encode()).hexdigest()[:32]
     rows = frappe.db.sql("SELECT * FROM `tabRG AI State` WHERE name=%s FOR UPDATE", (name,), as_dict=True)
     if not rows:
-        return insert("RG AI State", user, name=name, context_version=1, memory_enabled=1,
+        legacy_name = hashlib.sha256(("user:" + user).encode()).hexdigest()[:32]
+        legacy = frappe.db.sql("SELECT memory_enabled FROM `tabRG AI State` WHERE name=%s "
+                               "AND private_user=%s AND portal_role=%s FOR UPDATE",
+                               (legacy_name, user, LEGACY))
+        return insert("RG AI State", user, name=name, portal_role=portal,
+                      context_version=1, memory_enabled=int(bool(legacy[0][0])) if legacy else 1,
                       auth_version=0).as_dict()
+    if rows[0].portal_role != portal:
+        deny()
     return rows[0]
 
 
@@ -89,46 +117,69 @@ def prefilter_roles(user=None):
     return _roles(user or frappe.session.user, "")
 
 
-def conversation_row(name, user):
+def conversation_row(name, user, legacy=False):
     if not isinstance(name, str) or len(name) > 140:
         deny()
     rows = frappe.db.sql("SELECT * FROM `tabRG AI Conversation` WHERE name=%s FOR UPDATE", (name,), as_dict=True)
     if not rows or rows[0].private_user != user or rows[0].site != frappe.local.site or rows[0].status != "active":
         deny()
+    if (rows[0].portal_role == LEGACY) != legacy:
+        deny()
+    if not legacy and rows[0].portal_role not in PORTAL_ROLES:
+        deny()
     return rows[0]
 
 
-def guard(user=None, conversation=None, expected=None, sources=None):
+def guard(user=None, conversation=None, expected=None, sources=None, portal=None):
     user = user or frappe.session.user
     if user != frappe.session.user:
         deny()
+    if conversation is not None and (type(conversation) is not str or len(conversation) > 140):
+        deny()
     site = global_lock()
     assigned = current_roles(user)
-    state = user_state(user)
+    selected = frappe.db.get_value("RG AI Conversation", conversation, "portal_role") if conversation else portal
+    if type(selected) is not str or selected not in PORTAL_ROLES or (portal is not None and portal != selected):
+        deny()
+    if PORTAL_ROLES[selected] not in assigned:
+        deny()
+    state = user_state(user, selected)
     conv = conversation_row(conversation, user) if conversation else None
+    if conv and conv.portal_role != selected:
+        deny()
     versions = {"site": frappe.local.site, "user": user, "privacy": int(state.context_version),
                 "authorization": int(site.auth_version),
-                "conversation": int(conv.context_version) if conv else 0}
+                "conversation": int(conv.context_version) if conv else 0, "portal": selected}
     if expected is not None and versions != expected:
         frappe.throw("隐私、权限或会话已变化，本轮和旧预览已失效，请重新发起。", frappe.PermissionError)
     if sources:
         from research_group.ai.sources import validate
-        validate(sources, user, strict=True)
-    return {"versions": versions, "roles": assigned, "state": state, "conversation": conv}
+        validate(sources, user, strict=True, portal_role=selected)
+    return {"versions": versions, "roles": {PORTAL_ROLES[selected]}, "portal": selected,
+            "state": state, "conversation": conv}
 
 
-def invalidate(user, conversation=None):
+def invalidate(user, conversation=None, portal=None):
     # 调用方先锁全站闸门；不触碰任何正式业务记录。
-    state = user_state(user)
-    frappe.db.sql("UPDATE `tabRG AI State` SET context_version=context_version+1 WHERE name=%s", (state.name,))
+    if portal is not None and (type(portal) is not str or portal not in PORTAL_ROLES):
+        deny()
+    if portal:
+        state = user_state(user, portal)
+        frappe.db.sql("UPDATE `tabRG AI State` SET context_version=context_version+1 WHERE name=%s", (state.name,))
+    else:
+        frappe.db.sql("UPDATE `tabRG AI State` SET context_version=context_version+1 "
+                      "WHERE private_user=%s AND name<>%s", (user, GLOBAL))
     if conversation:
         frappe.db.sql("UPDATE `tabRG AI Conversation` SET context_version=context_version+1 WHERE name=%s",
                       (conversation,))
+    condition = " AND portal_role=%s" if portal else ""
+    values = (user, portal) if portal else (user,)
     frappe.db.sql("UPDATE `tabRG AI Operation` SET status='cancelled', parameters='', preview='', sources='[]' "
-                  "WHERE private_user=%s AND status='pending'", (user,))
+                  "WHERE private_user=%s AND status='pending'" + condition, values)
     # Logical invalidation never releases the worker's execution locks.
     frappe.db.sql("UPDATE `tabRG AI Run` SET status='cancelled', error_class='context_changed', finished_at=%s "
-                  "WHERE private_user=%s AND status IN ('queued','running')", (now_datetime(), user))
+                  "WHERE private_user=%s AND status IN ('queued','running')" + condition,
+                  (now_datetime(), *values))
 
 
 def native_identity_lock(doc=None, method=None):

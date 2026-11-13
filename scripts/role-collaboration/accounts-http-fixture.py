@@ -30,10 +30,14 @@ def _assert_candidate(request):
     config = json.loads((BENCH / "sites" / request["site"] / "site_config.json").read_bytes())
     expected = urlsplit(request["base"])
     actual = urlsplit(config.get("host_name", ""))
+    database = str(config.get("db_name", ""))
+    named = request.get("expected_db_name")
+    database_matches = (bool(re.fullmatch(r"_[0-9a-f]{16}", named)) and database == named
+                        if named is not None else database.startswith("rg_candidate_"))
     if (expected.scheme != "http" or expected.hostname not in {"localhost", "127.0.0.1"}
             or expected.port == 8088 or expected.path not in {"", "/"}
             or (actual.scheme, actual.netloc) != (expected.scheme, expected.netloc)
-            or not str(config.get("db_name", "")).startswith("rg_candidate_")
+            or not database_matches
             or config.get("rg_mail_mode") != "capture" or not config.get("mute_emails")
             or not config.get("allow_tests") or _settings()["mode"] != "capture"):
         raise AssertionError("isolated_capture_candidate_required")

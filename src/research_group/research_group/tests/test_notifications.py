@@ -803,7 +803,10 @@ class TestNotifications(IntegrationTestCase):
             voided = meals.submit_order(round_["name"], rice(), request_id=frappe.generate_hash(length=16))
             frappe.set_user(self.users["secretary"])
             meals.void_order(voided["name"], "虚构作废订单", voided["revision"])
-            mail.send_deadline_reminders()
+            # Limit this fixture to its own members; other test data can fill
+            # the scheduler's bounded 100-event batch before this meeting.
+            with patch.object(mail, "_members", return_value=[{"user": user} for user in self.users.values()]):
+                mail.send_deadline_reminders()
             frappe.db.commit()
             queued = []
             for doctype, name in ((survey.doctype, survey.name), ("RG Meal Round", round_["name"]),

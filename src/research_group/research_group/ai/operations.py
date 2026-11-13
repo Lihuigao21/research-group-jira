@@ -6,7 +6,7 @@ import frappe
 from frappe.utils import add_days, getdate, get_datetime, now_datetime, today
 
 from research_group.ai.memory import activate_memory, own_item, update_plan
-from research_group.ai.security import guard, invalidate
+from research_group.ai.security import PORTAL_ROLES, guard, invalidate
 from research_group.ai.sources import capture, links, read_current, reject_cycle, union, validate
 from research_group.ai.storage import clear_target, dumps, insert, journal_targets, loads, require_capacity, save
 from research_group.policy import PENDING, STUDENT, TEACHER, deny
@@ -30,8 +30,8 @@ def exact(params, allowed, required):
         frappe.throw("工具参数结构无效，存在缺失或未允许字段。")
 
 
-def normalize(action, params, user):
-    if action not in ACTIONS:
+def normalize(action, params, user, portal):
+    if type(action) is not str or action not in ACTIONS:
         deny()
     if action == "manuscript_suggestion":
         exact(params, {"selection", "suggestion", "reason"}, {"selection", "suggestion"})
@@ -46,7 +46,7 @@ def normalize(action, params, user):
         value = {"change": change}
         if change != "add":
             value["name"] = text(params.get("name"), "记忆ID", 140)
-            own_item("RG AI Memory", value["name"], user)
+            own_item("RG AI Memory", value["name"], user, portal)
         elif params.get("name"):
             deny()
         if change != "delete":
@@ -63,7 +63,7 @@ def normalize(action, params, user):
         value = {"change": change}
         if change != "add":
             value["name"] = text(params.get("name"), "计划ID", 140)
-            own_item("RG AI Plan", value["name"], user)
+            own_item("RG AI Plan", value["name"], user, portal)
         elif params.get("name"):
             deny()
         if change != "delete":
@@ -93,19 +93,23 @@ def normalize(action, params, user):
             "start_at": str(start), "end_at": str(end), "agenda": text(params["agenda"], "议题")}
 
 
-def authorize(action, params, user, assigned):
+def authorize(action, params, user, assigned, portal):
     refs = []
     if action == "manuscript_suggestion":
-        refs = capture(read_current("RG Manuscript Selection", params["selection"], user))
+        if not assigned.intersection({TEACHER, STUDENT}):
+            deny()
+        refs = capture(read_current("RG Manuscript Selection", params["selection"], user,
+                                    portal_role=portal), portal_role=portal)
     elif action in {"progress", "appointment"}:
         if STUDENT not in assigned:
             deny()
-        topic = read_current("RG Topic", params["topic"], user)
+        topic = read_current("RG Topic", params["topic"], user, portal_role=portal)
         if topic.student != user:
             deny()
-        refs = capture(topic)
+        refs = capture(topic, portal_role=portal)
     elif params.get("topic"):
-        refs = capture(read_current("RG Topic", params["topic"], user))
+        refs = capture(read_current("RG Topic", params["topic"], user,
+                                    portal_role=portal), portal_role=portal)
     if action == "appointment":
         # 与原预约协议一致，先锁教师User，再进入预约写入。
         from research_group.ai.security import current_roles
@@ -117,13 +121,14 @@ def authorize(action, params, user, assigned):
 
 def propose(ctx, action, parameters):
     state = guard(ctx.user, ctx.conversation, ctx.versions, ctx.sources)
-    params = normalize(action, parameters, ctx.user)
-    refs = union(ctx.sources, authorize(action, params, ctx.user, state["roles"]))
+    ctx.portal_role = state["portal"]
+    params = normalize(action, parameters, ctx.user, ctx.portal_role)
+    refs = union(ctx.sources, authorize(action, params, ctx.user, state["roles"], ctx.portal_role))
     target = None
     target_version = None
     if action in {"memory_change", "plan_change"} and params["change"] != "add":
         dt = "RG AI Memory" if action == "memory_change" else "RG AI Plan"
-        target = own_item(dt, params["name"], ctx.user)
+        target = own_item(dt, params["name"], ctx.user, ctx.portal_role)
         target_version = int(target.context_version)
         # 删除不回显已失权内容；编辑保留全部原依赖，不能换成无来源的个人文本。
         if params["change"] == "delete":
@@ -131,8 +136,8 @@ def propose(ctx, action, parameters):
         else:
             refs = union(refs, loads(target.sources))
             refs = [ref for ref in refs if (ref["doctype"], ref["name"]) != (dt, target.name)]
-            reject_cycle(dt, target.name, refs, ctx.user)
-    validate(refs, ctx.user, strict=True)
+            reject_cycle(dt, target.name, refs, ctx.user, ctx.portal_role)
+    validate(refs, ctx.user, strict=True, portal_role=ctx.portal_role)
     content = params.get("content", "")
     deleting = action in {"memory_change", "plan_change"} and params["change"] == "delete"
     if deleting:
@@ -182,7 +187,8 @@ def propose(ctx, action, parameters):
                "notice": "确认计划含义与个人状态；不等同科研成功或正式进展。" if action == "plan_change"
                else ("请确认进展内容真实，再提交。" if action == "progress" else "仅本次操作有效。")}
     if action == "manuscript_suggestion":
-        selection = read_current("RG Manuscript Selection", params["selection"], ctx.user)
+        selection = read_current("RG Manuscript Selection", params["selection"], ctx.user,
+                                 portal_role=ctx.portal_role)
         preview.update(original_text=selection.original_text, manuscript_version=selection.manuscript_version,
                        source_sha256=selection.sha256, scope="仅论文参与学生和指定教师",
                        notice="这是AI辅助建议；确认后单独保存，保留原文和来源，不覆盖原稿或冒充教师意见。")
@@ -202,14 +208,16 @@ def operation_dict(doc, internal=False):
     state = "expired" if expired else doc.status
     refs = loads(doc.sources)
     readable = (state == "pending" and loads(doc.expected, {}).get("protocol") == OPERATION_PROTOCOL
-                and validate(refs, doc.private_user))
+                and doc.portal_role in PORTAL_ROLES
+                and validate(refs, doc.private_user, portal_role=doc.portal_role))
     if doc.run_id and not internal:
         run_state = frappe.db.sql("SELECT status FROM `tabRG AI Run` WHERE name=%s FOR UPDATE", (doc.run_id,))
         if not run_state or run_state[0][0] != "completed":
             readable = False
     return {"name": doc.name, "action": doc.action, "status": state,
             "expires_at": str(doc.expires_at), "preview": loads(doc.preview, {}) if readable else {},
-            "sources": links(refs) if readable else [], "result": loads(doc.result, {}) if state == "consumed" else {},
+            "sources": links(refs, portal_role=doc.portal_role) if readable else [],
+            "result": loads(doc.result, {}) if state == "consumed" else {},
             "stale": state == "pending" and not readable}
 
 
@@ -226,11 +234,16 @@ def own_operation(name, user):
 
 
 def decide(operation_id, decision):
-    if decision not in {"confirm", "cancel"}:
+    if type(decision) is not str or decision not in {"confirm", "cancel"}:
         deny()
     user = frappe.session.user
-    guard(user)
+    pointer = frappe.db.get_value("RG AI Operation", operation_id, ["conversation", "portal_role"], as_dict=True)
+    if not pointer or pointer.portal_role not in PORTAL_ROLES:
+        deny()
+    initial_state = guard(user, pointer.conversation)
     operation = own_operation(operation_id, user)
+    if initial_state["portal"] != operation.portal_role or operation.conversation != pointer.conversation:
+        deny()
     if operation.status == "consumed":
         return {"name": operation.name, "status": "consumed", "result": loads(operation.result, {})}
     if operation.status != "pending":
@@ -253,16 +266,16 @@ def decide(operation_id, decision):
     params = loads(operation.parameters, {})
     if hashlib.sha256(dumps(params).encode()).hexdigest() != expected.get("parameter_hash"):
         deny()
-    params = normalize(operation.action, params, user)
-    authorize(operation.action, params, user, state["roles"])
+    params = normalize(operation.action, params, user, state["portal"])
+    authorize(operation.action, params, user, state["roles"], state["portal"])
     target = None
     if operation.target:
         doctype = "RG AI Memory" if operation.action == "memory_change" else "RG AI Plan"
-        target = own_item(doctype, operation.target, user)
+        target = own_item(doctype, operation.target, user, state["portal"])
         if int(target.context_version) != expected["target_version"]:
             frappe.throw("目标已变化，请重新生成预览。", frappe.PermissionError)
         if params.get("change") != "delete":
-            reject_cycle(doctype, target.name, refs, user)
+            reject_cycle(doctype, target.name, refs, user, state["portal"])
     # 保存点保证内部调用者捕获错误时，也不会留下一半业务写入。
     marker = "ai_confirm_" + frappe.generate_hash(length=8)
     frappe.db.savepoint(marker)
@@ -273,7 +286,7 @@ def decide(operation_id, decision):
         operation.sources = "[]"
         save(operation)
         if operation.action in {"memory_change", "plan_change"}:
-            invalidate(user)
+            invalidate(user, portal=state["portal"])
     except Exception:
         frappe.db.rollback(save_point=marker)
         raise
@@ -308,8 +321,9 @@ def apply(operation, params, target, refs):
         return {"doctype": doctype, "name": target.name, "status": "deleted"}
     if action == "memory_change":
         from research_group.ai.config import limits
-        rows = frappe.db.sql("SELECT name FROM `tabRG AI Memory` WHERE private_user=%s AND status='active' "
-                             "AND (expires_at IS NULL OR expires_at>NOW()) FOR UPDATE", (user,))
+        rows = frappe.db.sql("SELECT name FROM `tabRG AI Memory` WHERE private_user=%s AND portal_role=%s "
+                             "AND status='active' AND (expires_at IS NULL OR expires_at>NOW()) FOR UPDATE",
+                             (user, operation.portal_role))
         if target.name not in {row[0] for row in rows} and len(rows) >= limits()["memory_count"]:
             frappe.throw("有效记忆数量已满，请先删除不再需要的记忆。")
         target.sources = dumps(refs)
@@ -322,6 +336,6 @@ def apply(operation, params, target, refs):
         update_plan(target, params)
     # A new target adds another graph node/depth beyond its validated inputs.
     # Revalidate its complete saved graph inside the confirmation savepoint.
-    read_current(doctype, target.name, user)
+    read_current(doctype, target.name, user, portal_role=operation.portal_role)
     return {"doctype": doctype, "name": target.name, "status": target.status,
             "version": target.context_version}

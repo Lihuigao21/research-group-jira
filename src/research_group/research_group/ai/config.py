@@ -5,6 +5,19 @@ from urllib.parse import urlsplit
 
 import frappe
 
+DEFAULT_MODEL = "gpt-6.1-sol"
+DEFAULT_REASONING = "medium"
+REASONING_LEVELS = ("low", "medium", "high")
+
+
+def reasoning_effort(value=None):
+    if value is None:
+        return DEFAULT_REASONING
+    if type(value) is not str or value not in REASONING_LEVELS:
+        frappe.throw("推理强度只支持低、中、高三个档位。")
+    return value
+
+
 DEFAULTS = {
     "minute_runs": 5, "daily_runs": 50, "input_chars": 12000,
     "context_tokens": 24000, "output_tokens": 2000, "model_calls": 4,
@@ -51,6 +64,8 @@ def mode(configuration=None):
 def public_configuration():
     value = mode()
     return {"mode": value, "engine": "LangChain + LangGraph", "scope": "仅本站工作",
+            "model": server_configuration().get("rg_ai_model") or DEFAULT_MODEL,
+            "default_reasoning_effort": DEFAULT_REASONING, "reasoning_levels": list(REASONING_LEVELS),
             "label": "LangChain + LangGraph · 站内离线模拟 · 不调用真实模型" if value == "mock" else
             ("AI助手已关闭" if value == "disabled" else "LangChain + LangGraph · 共享模型服务 · 仅本站工作"), "limits": limits()}
 
@@ -72,7 +87,7 @@ def configuration_version():
                 or parsed.query or parsed.fragment):
             frappe.throw("模型端点配置无效。")
     config = {"engine": "langchain", "graph": GRAPH_VERSION, "scope": SCOPE_VERSION,
-              "mode": mode(current), "model": current.get("rg_ai_model", ""),
+              "mode": mode(current), "model": current.get("rg_ai_model") or DEFAULT_MODEL,
               "base_url": endpoint, "allowed_base_urls": sorted(set(allowed)),
               "real_enabled": bool(current.get("rg_ai_real_enabled")),
               "protocol": current.get("rg_ai_protocol", "responses"),

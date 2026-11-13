@@ -69,8 +69,8 @@ function environment() {
 }
 
 function button(root, label) { const found = root.all().find(element => element.tag === "button" && element.textValue === label); assert.ok(found, label); return found; }
-async function authorize(env) {
-  await env.page.selection({name: "immutable-version"}, env.root);
+async function authorize(env, manuscript = {author: env.page.user, reviewer: "teacher"}) {
+  await env.page.selection({name: "immutable-version"}, env.root, manuscript);
   const original = env.root.all().find(element => element.attributes["aria-label"] === "实际将交给 AI 的原文（最多 6000 字）");
   original.val("明确授权的原文 <tag> & a < b");
   const consent = env.root.all().find(element => element.tag === "input" && element.attributes.type === "checkbox");
@@ -99,7 +99,19 @@ async function authorize(env) {
   const args = good.calls[2].args;
   check(args.selections.length === 1 && args.selections[0] === "explicit-source");
   check(!args.prompt.includes(controls.original.val()));
-  check(good.rg.pendingAIConversation === "own-conversation" && good.routes.join(",") === "rg-ai-assistant");
+  check(good.calls[1].args.portal === "student" && args.reasoning_effort === "medium");
+  check(good.rg.pendingAIConversation === "own-conversation" && good.rg.pendingAIPortal === "student"
+    && good.routes.join(",") === "rg-student-agent");
+
+  const dualAuthor = environment(); dualAuthor.page.user = "dual-role";
+  dualAuthor.reply = good.reply;
+  const dualControls = await authorize(dualAuthor, {author: "dual-role", reviewer: "other-teacher"});
+  await dualControls.send.trigger("click");
+  check(dualAuthor.calls[1].args.portal === "student" && dualAuthor.routes.join(",") === "rg-student-agent");
+  const reviewer = environment(); reviewer.page.user = "teacher"; reviewer.reply = good.reply;
+  const reviewerControls = await authorize(reviewer, {author: "student", reviewer: "teacher"});
+  await reviewerControls.send.trigger("click");
+  check(reviewer.calls[1].args.portal === "teacher" && reviewer.routes.join(",") === "rg-teacher-agent");
 
   // Frappe leaves old pages attached. Both a new route and hidden ancestors must
   // suppress a late enqueue receipt, including its failure-recovery controls.

@@ -5,7 +5,7 @@ import time
 import frappe
 from frappe.utils import get_datetime, now_datetime
 
-from research_group.ai.config import configuration_version, limits, mode
+from research_group.ai.config import configuration_version, limits, mode, reasoning_effort
 from research_group.ai.context import RunContext
 from research_group.ai.graph import run_graph
 from research_group.ai.operations import text
@@ -31,8 +31,9 @@ def expire_stale():
     # 无法知道进程是否已发出请求，超时用量保持未知和预占，不重放。
 
 
-def submit(conversation, prompt, topic=None, enqueue_job=True, selections=None):
+def submit(conversation, prompt, topic=None, enqueue_job=True, selections=None, reasoning=None):
     state = guard(conversation=conversation)
+    effort = reasoning_effort(reasoning)
     if mode() == "disabled":
         frappe.throw("AI助手当前已关闭。")
     user = frappe.session.user
@@ -45,9 +46,9 @@ def submit(conversation, prompt, topic=None, enqueue_job=True, selections=None):
             or any(not isinstance(name, str) or not 1 <= len(name) <= 140 for name in selections)):
         frappe.throw("本轮只能明确选择一个本人有效论文选区。")
     for selection in selections:
-        read_current("RG Manuscript Selection", selection, user)
+        read_current("RG Manuscript Selection", selection, user, portal_role=state["portal"])
     if topic:
-        read_current("RG Topic", text(topic, "课题ID", 140))
+        read_current("RG Topic", text(topic, "课题ID", 140), portal_role=state["portal"])
     expire_stale()
     current = now_datetime()
     day = current.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -71,6 +72,7 @@ def submit(conversation, prompt, topic=None, enqueue_job=True, selections=None):
     require_capacity(user, len(prompt.encode("utf-8")) + 1024)
     run = insert("RG AI Run", user, conversation=conversation, queue_topic=topic or "", selection_ids=dumps(selections),
                  expected=dumps(state["versions"]), config_version=configuration_version(), mode=mode(), status="queued",
+                 reasoning_effort=effort,
                  reserved_tokens=reserved, usage_known=0, used_tokens=0, tool_order="[]", model_calls=0)
     sequence = frappe.db.sql("SELECT COALESCE(MAX(sequence),0)+1 FROM `tabRG AI Message` WHERE conversation=%s FOR UPDATE",
                              (conversation,))[0][0]
@@ -89,7 +91,7 @@ def submit(conversation, prompt, topic=None, enqueue_job=True, selections=None):
                                                        "finished_at": now_datetime()}, update_modified=False)
             frappe.db.commit()
     return {"run_id": run.name, "conversation": conversation, "status": frappe.db.get_value("RG AI Run", run.name, "status"),
-            "mode": run.mode}
+            "mode": run.mode, "portal": state["portal"], "reasoning_effort": effort}
 
 
 def enqueue(run_id):
@@ -126,12 +128,16 @@ def execute(run_id, provider=None):
     ctx = None
     try:
         frappe.set_user(run.private_user)
-        guard(run.private_user, run.conversation, loads(run.expected, {}))
+        state = guard(run.private_user, run.conversation, loads(run.expected, {}))
+        if state["portal"] != run.portal_role or run.reasoning_effort not in {"low", "medium", "high"}:
+            frappe.throw("运行工作台或推理参数无效。", frappe.PermissionError)
         if run.config_version != configuration_version() or run.mode != mode():
             frappe.throw("共享模型配置已变化，请重新发起。", frappe.PermissionError)
         run.status, run.started_at = "running", now_datetime()
         save(run)
-        ctx = RunContext(run.private_user, run.conversation, run.name, loads(run.expected, {}), topic=run.queue_topic or None)
+        ctx = RunContext(run.private_user, run.conversation, run.name, loads(run.expected, {}),
+                         portal_role=run.portal_role, reasoning_effort=run.reasoning_effort,
+                         topic=run.queue_topic or None)
         ctx.selected_selections = set(loads(run.selection_ids, []))
         prompt = frappe.db.sql("SELECT content FROM `tabRG AI Message` WHERE request_id=%s AND role='user' FOR UPDATE",
                                (run.name,))[0][0]

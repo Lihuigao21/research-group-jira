@@ -16,6 +16,7 @@ CHECKS = []
 core.RESULTS = CHECKS
 check = core.check
 PREFIX = "/api/method/research_group.ai.api."
+PORTALS = {"teacher": "teacher", "one": "student", "two": "student", "secretary": "secretary"}
 
 
 def browser_client():
@@ -67,9 +68,10 @@ def main():
     passwords = json.loads((ROOT / "runtime/secrets/demo-credentials.json").read_bytes())
     clients = {key: browser_client().login(key, passwords) for key in core.ACCOUNTS}
     one, two, teacher, secretary = (clients[k] for k in ("one", "two", "teacher", "secretary"))
-    boot = {key: ok("读取AI配置 " + key, rpc(client, "bootstrap")) for key, client in clients.items()}
+    boot = {key: ok("读取AI配置 " + key, rpc(client, "bootstrap", portal=PORTALS[key]))
+            for key, client in clients.items()}
     check("所有人共用模拟配置", all(v["configuration"]["mode"] == "mock" for v in boot.values()))
-    conv = {key: ok("创建本人会话 " + key, rpc(client, "create_conversation"))["name"]
+    conv = {key: ok("创建本人会话 " + key, rpc(client, "create_conversation", portal=PORTALS[key]))["name"]
             for key, client in clients.items()}
     marker = "AI独立HTTP虚构-" + secrets.token_hex(4)
     result = ask(one, conv["one"], marker)
@@ -77,7 +79,7 @@ def main():
     for key in ("two", "teacher", "secretary"):
         denied("拒绝跨人会话 " + key, rpc(clients[key], "get_conversation", name=conv["one"]))
         denied("拒绝跨人运行 " + key, rpc(clients[key], "get_run", run_id=result["run_id"]))
-        listing = ok("本人会话列表 " + key, rpc(clients[key], "list_conversations"))
+        listing = ok("本人会话列表 " + key, rpc(clients[key], "list_conversations", portal=PORTALS[key]))
         check("列表不含其他人会话 " + key, conv["one"] not in {r["name"] for r in listing["items"]})
     denied("未登录不可访问AI", rpc(browser_client(), "bootstrap"))
     for doctype in ("RG AI Conversation", "RG AI Message", "RG AI Memory", "RG AI Operation", "RG AI Run"):
@@ -115,16 +117,17 @@ def main():
     replay = ok("重复确认返回原回执", rpc(one, "decide_operation", operation_id=memory, decision="confirm"))
     check("重复确认不重复创建", confirmed["result"] == replay["result"])
     memory_name = confirmed["result"]["name"]
-    items = ok("本人记忆列表", rpc(one, "private_items", kind="memory"))["items"]
+    items = ok("本人记忆列表", rpc(one, "private_items", kind="memory", portal="student"))["items"]
     check("确认后记忆可用", any(r["name"] == memory_name and r["status"] == "active" for r in items))
     for key in ("two", "teacher", "secretary"):
-        items = ok("他人只见自己记忆 " + key, rpc(clients[key], "private_items", kind="memory"))["items"]
+        items = ok("他人只见自己记忆 " + key, rpc(clients[key], "private_items",
+                                      kind="memory", portal=PORTALS[key]))["items"]
         check("记忆不串人 " + key, memory_name not in {r["name"] for r in items})
     recalled = ask(one, conv["one"], "查看我的记忆")
     check("跨回合读取本人有效记忆", marker in recalled["message"]["content"])
     cancelled = proposal(one, conv["one"], "plan_change", {"change": "add", "content": marker + "未保存计划"})
     ok("取消计划提案", rpc(one, "decide_operation", operation_id=cancelled, decision="cancel"))
-    plans = ok("读取私人计划", rpc(one, "private_items", kind="plan"))["items"]
+    plans = ok("读取私人计划", rpc(one, "private_items", kind="plan", portal="student"))["items"]
     check("取消无计划写入", not any(marker + "未保存计划" in r["content"] for r in plans))
     plan = proposal(one, conv["one"], "plan_change", {"change": "add", "content": marker + "本人核对计划"})
     plan_result = ok("确认保存计划", rpc(one, "decide_operation", operation_id=plan, decision="confirm"))
@@ -146,7 +149,7 @@ def main():
     check("AI预约仍待教师审批", applied["result"]["status"] == "待审批")
     deletion = proposal(one, conv["one"], "memory_change", {"change": "delete", "name": memory_name})
     ok("确认删除记忆", rpc(one, "decide_operation", operation_id=deletion, decision="confirm"))
-    items = ok("删除后记忆列表", rpc(one, "private_items", kind="memory"))["items"]
+    items = ok("删除后记忆列表", rpc(one, "private_items", kind="memory", portal="student"))["items"]
     check("已删记忆不再列出", memory_name not in {r["name"] for r in items})
     history = ok("删除后读取旧历史", rpc(one, "get_conversation", name=conv["one"]))
     target = next(r for r in history["messages"] if r["request_id"] == recalled["run_id"] and r["role"] == "assistant")
@@ -154,7 +157,7 @@ def main():
     ok("删除本人会话", rpc(one, "remove_conversation", name=conv["one"]))
     denied("已删会话不回放", rpc(one, "get_conversation", name=conv["one"]))
     denied("已删会话的运行不回显", rpc(one, "get_run", run_id=result["run_id"]))
-    ok("教师只读总览模拟", rpc(teacher, "set_memory_enabled", enabled=False))
+    ok("教师只读总览模拟", rpc(teacher, "set_memory_enabled", enabled=False, portal="teacher"))
     ask(teacher, conv["teacher"], "全组最近讨论")
     ask(secretary, conv["secretary"], "问卷完成概况")
 

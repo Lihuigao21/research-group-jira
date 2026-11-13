@@ -13,6 +13,7 @@
   "field_order": [
     "site",
     "private_user",
+    "portal_role",
     "context_version",
     "auth_version",
     "memory_enabled"
@@ -31,6 +32,14 @@
       "fieldtype": "Data",
       "read_only": 1,
       "length": 140,
+      "search_index": 1
+    },
+    {
+      "fieldname": "portal_role",
+      "label": "工作台角色",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 20,
       "search_index": 1
     },
     {

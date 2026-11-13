@@ -82,6 +82,46 @@ class TestPortals(IntegrationTestCase):
                 with self.assertRaises(frappe.PermissionError):
                     portals.bootstrap(role)
 
+    def test_combined_member_portal_content_uses_selected_role(self):
+        frappe.set_user(self.users["secretary"])
+        secretary = portals.bootstrap("secretary")
+        student = portals.bootstrap("student")
+        secretary_nav = {row["id"]: row["route"] for row in secretary["navigation"]}
+        student_nav = {row["id"]: row["route"] for row in student["navigation"]}
+        self.assertEqual(secretary_nav["assistant"], "rg-secretary-agent")
+        self.assertEqual(student_nav["assistant"], "rg-student-agent")
+        self.assertNotIn("manuscripts", secretary_nav)
+        self.assertIn("manuscripts", student_nav)
+        self.assertTrue(secretary["can_message"])
+        self.assertFalse(student["can_message"])
+        self.assertTrue(secretary["can_maintain_home"])
+        self.assertFalse(student["can_maintain_home"])
+        self.assertEqual({row["id"]: row["route"] for row in portals.bootstrap()["navigation"]}, secretary_nav)
+
+    def test_boot_sidebar_keeps_user_added_items_and_other_shells(self):
+        from unittest.mock import patch
+        from research_group.setup import boot_session
+
+        boot = frappe._dict({"sysdefaults": {"setup_complete": 1}, "workspaces": {"pages": [
+            {"name": "秘书工作台", "module": "Research Group", "standard": 1}]},
+            "module_sidebars": {"Research Group": {"items": [
+                {"link_type": "Page", "link_to": "rg-secretary-portal", "label": "秘书工作台"},
+                {"link_type": "Page", "link_to": "rg-student-portal", "label": "学生工作台"},
+                {"link_type": "DocType", "link_to": "RG Survey", "label": "问卷"},
+                {"link_type": "Page", "link_to": "private-notes", "added": 1, "label": "自建页"},
+                {"link_type": "Page", "link_to": "private-board", "derived": 1, "label": "旧自建页"}],
+                "workspaces": ["秘书工作台", "私人空间"]},
+                "Private": {"items": [{"link_type": "Page", "link_to": "private-notes"}],
+                            "workspaces": ["私人空间"]}}})
+        with patch("research_group.setup.roles", return_value={SECRETARY, STUDENT}):
+            boot_session(boot)
+            boot_session(boot)
+        sidebar = boot.module_sidebars["Research Group"]
+        self.assertEqual([row["link_to"] for row in sidebar["items"]],
+                         ["rg-secretary-portal", "rg-student-portal", "private-notes", "private-board"])
+        self.assertEqual(sidebar["workspaces"], ["私人空间"])
+        self.assertEqual(boot.module_sidebars["Private"]["items"][0]["link_to"], "private-notes")
+
     def test_disabled_member_and_account_have_no_portal(self):
         for field in ("member", "user"):
             frappe.set_user("Administrator")
@@ -227,6 +267,15 @@ class TestPortals(IntegrationTestCase):
                                             expected_revision=public["revision"], status="offline")
         frappe.set_user(self.users["one"])
         self.assertNotIn(offline["name"], {row.name for row in portals.bootstrap()["announcements"]})
+
+    def test_combined_member_announcements_do_not_cross_portals(self):
+        frappe.set_user(self.users["secretary"])
+        secret = portals.save_announcement(self.prefix + "secretary-only", "秘书公告", "secretary", status="published")
+        student = portals.save_announcement(self.prefix + "student-only", "学生公告", "student", status="published")
+        for portal, included, excluded in (("secretary", secret, student), ("student", student, secret)):
+            names = {row.name for row in portals.bootstrap(portal)["announcements"]}
+            self.assertIn(included["name"], names)
+            self.assertNotIn(excluded["name"], names)
 
     def test_internal_portal_tables_deny_native_read_and_write(self):
         frappe.set_user(self.users["teacher"])

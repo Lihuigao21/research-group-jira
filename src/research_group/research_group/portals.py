@@ -14,9 +14,12 @@ from research_group.ai.security import current_roles, global_lock
 from research_group.policy import ROLES, SECRETARY, STUDENT, TEACHER, deny, save_internal, trusted
 
 PORTALS = {
-    "teacher": {"role": TEACHER, "title": "教师工作台", "route": "rg-teacher-portal"},
-    "secretary": {"role": SECRETARY, "title": "秘书工作台", "route": "rg-secretary-portal"},
-    "student": {"role": STUDENT, "title": "学生工作台", "route": "rg-student-portal"},
+    "teacher": {"role": TEACHER, "title": "教师工作台", "route": "rg-teacher-portal",
+                "agent_route": "rg-teacher-agent"},
+    "secretary": {"role": SECRETARY, "title": "秘书工作台", "route": "rg-secretary-portal",
+                  "agent_route": "rg-secretary-agent"},
+    "student": {"role": STUDENT, "title": "学生工作台", "route": "rg-student-portal",
+                "agent_route": "rg-student-agent"},
 }
 NAVIGATION = {
     "topics": {"label": "课题与进展", "route": "List/RG Topic", "roles": (TEACHER, STUDENT)},
@@ -153,21 +156,24 @@ def bootstrap(portal=None):
     if portal is not None and (portal not in PORTALS or PORTALS[portal]["role"] not in assigned):
         deny()
     current = portal or available[0]["id"]
+    current_role = PORTALS[current]["role"]
     settings = _settings()
     navigation = []
     for row in _navigation(settings["navigation_json"]):
         target = NAVIGATION[row["id"]]
-        if row["visible"] and assigned.intersection(target["roles"]):
-            navigation.append({**row, "route": target["route"]})
-    audiences = ["all", *[key for key, value in PORTALS.items() if value["role"] in assigned]]
+        if row["visible"] and current_role in target["roles"]:
+            route = PORTALS[current]["agent_route"] if row["id"] == "assistant" else target["route"]
+            navigation.append({**row, "route": route})
+    audiences = ["all", current]
     placeholders = ",".join(["%s"] * len(audiences))
     announcements = frappe.db.sql("SELECT name,title,body,published_at,publisher FROM `tabRG Announcement` "
         f"WHERE status='published' AND audience IN ({placeholders}) ORDER BY published_at DESC,name LIMIT 20 FOR UPDATE",
         tuple(audiences), as_dict=True)
     return {"user": frappe.session.user, "portal": current, "portals": available,
             "introduction": settings["introduction"], "navigation": navigation, "announcements": announcements,
-            "can_message": bool(assigned.intersection((TEACHER, SECRETARY))),
-            "can_maintain_home": SECRETARY in assigned, "can_manage_directions": TEACHER in assigned}
+            "can_message": current_role in (TEACHER, SECRETARY),
+            "can_maintain_home": current_role == SECRETARY,
+            "can_manage_directions": current_role == TEACHER}
 
 
 @frappe.whitelist()

@@ -13,12 +13,14 @@
   "field_order": [
     "site",
     "private_user",
+    "portal_role",
     "conversation",
     "queue_topic",
     "selection_ids",
     "expected",
     "config_version",
     "mode",
+    "reasoning_effort",
     "status",
     "reserved_tokens",
     "used_tokens",
@@ -44,6 +46,14 @@
       "fieldtype": "Data",
       "read_only": 1,
       "length": 140,
+      "search_index": 1
+    },
+    {
+      "fieldname": "portal_role",
+      "label": "工作台角色",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "length": 20,
       "search_index": 1
     },
     {
@@ -87,6 +97,14 @@
       "fieldtype": "Data",
       "read_only": 1,
       "length": 200
+    },
+    {
+      "fieldname": "reasoning_effort",
+      "label": "推理强度",
+      "fieldtype": "Select",
+      "read_only": 1,
+      "options": "low\nmedium\nhigh",
+      "default": "medium"
     },
     {
       "fieldname": "status",

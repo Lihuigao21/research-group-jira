@@ -5,7 +5,7 @@ import time
 import frappe
 from frappe.utils import get_datetime, now_datetime
 
-from research_group.ai.security import current_roles
+from research_group.ai.security import LEGACY, PORTAL_ROLES, current_roles
 from research_group.ai.storage import dumps, loads
 from research_group.policy import PUBLISHED, SECRETARY, STUDENT, TEACHER, deny
 
@@ -34,16 +34,25 @@ PRIVATE = {"RG Topic", "RG Progress", "RG Appointment", "RG Discussion Record"}
 MAX_PRIVATE_DEPTH = 256
 
 
-def validation_audit(user):
-    return {"memo": {}, "heights": {}, "nodes": 0, "started": time.monotonic(), "roles": current_roles(user)}
+def validation_audit(user, portal_role=None):
+    assigned = current_roles(user)
+    if portal_role in PORTAL_ROLES:
+        role = PORTAL_ROLES[portal_role]
+        if role not in assigned:
+            deny()
+        assigned = {role}
+    elif portal_role not in (None, LEGACY):
+        deny()
+    return {"memo": {}, "heights": {}, "nodes": 0, "started": time.monotonic(),
+            "roles": assigned, "portal_role": portal_role}
 
 
-def read_current(doctype, name, user=None, _stack=(), _audit=None):
+def read_current(doctype, name, user=None, _stack=(), _audit=None, portal_role=None):
     user = user or frappe.session.user
     if doctype not in FIELDS or not isinstance(name, str) or not 1 <= len(name) <= 140:
         deny()
     if _audit is None:
-        _audit = validation_audit(user)
+        _audit = validation_audit(user, portal_role)
         _audit["nodes"] = 1
     assigned = _audit["roles"]
     try:
@@ -57,6 +66,11 @@ def read_current(doctype, name, user=None, _stack=(), _audit=None):
                   "RG Manuscript Selection": read_selection}[doctype]
         doc = reader(name, user)
         allowed = True
+        if _audit["portal_role"] in PORTAL_ROLES:
+            manuscript = doc if doctype == "RG Manuscript" else frappe.get_doc("RG Manuscript", doc.manuscript,
+                                                                              for_update=True)
+            allowed = ((TEACHER in assigned and manuscript.reviewer == user)
+                       or (STUDENT in assigned and manuscript.author == user))
     elif doctype in PRIVATE:
         allowed = TEACHER in assigned or (STUDENT in assigned and doc.student == user)
     elif doctype == "RG Member":
@@ -64,15 +78,18 @@ def read_current(doctype, name, user=None, _stack=(), _audit=None):
     elif doctype == "RG Group Meeting":
         allowed = doc.status == PUBLISHED or bool(assigned & {TEACHER, SECRETARY})
     elif doctype == "RG Meeting Report":
-        read_current("RG Group Meeting", doc.meeting, user)
+        read_current("RG Group Meeting", doc.meeting, user, _audit=_audit,
+                     portal_role=_audit["portal_role"])
         allowed = True
     elif doctype == "RG Material Version":
-        read_current("RG Meeting Report", doc.report, user)
+        read_current("RG Meeting Report", doc.report, user, _audit=_audit,
+                     portal_role=_audit["portal_role"])
         allowed = True
     elif doctype == "RG Survey":
         allowed = SECRETARY in assigned or doc.status in {PUBLISHED, "已关闭"}
     elif doctype == "RG Survey Response":
-        read_current("RG Survey", doc.survey, user)
+        read_current("RG Survey", doc.survey, user, _audit=_audit,
+                     portal_role=_audit["portal_role"])
         allowed = SECRETARY in assigned or doc.respondent == user
     elif doctype in {"RG AI Memory", "RG AI Plan"}:
         key = (doctype, name)
@@ -80,12 +97,15 @@ def read_current(doctype, name, user=None, _stack=(), _audit=None):
             deny()
         if len(_stack) >= MAX_PRIVATE_DEPTH:
             frappe.throw("私人来源链达到有界深度，请缩小来源后重新生成。")
-        allowed = doc.private_user == user and doc.site == frappe.local.site and doc.status not in {"deleted", "candidate"}
+        allowed = (doc.private_user == user and doc.site == frappe.local.site
+                   and doc.status not in {"deleted", "candidate"}
+                   and (_audit["portal_role"] is None or doc.portal_role == _audit["portal_role"]))
         if allowed and doc.expires_at and get_datetime(doc.expires_at) <= now_datetime():
             allowed = False
         if allowed:
             refs = loads(doc.sources)
-            validate(refs, user, strict=True, _stack=(*_stack, key), _audit=_audit)
+            validate(refs, user, strict=True, _stack=(*_stack, key), _audit=_audit,
+                     portal_role=_audit["portal_role"])
             # Memoized ancestors still contribute their full graph height.
             # Checking only the current DFS stack depends on traversal order.
             height = 1 + max((_audit["heights"].get((item["doctype"], item["name"]), 0) for item in refs), default=0)
@@ -125,13 +145,13 @@ def union(*collections):
     return [result[key] for key in sorted(result)]
 
 
-def validate(sources, user=None, strict=False, allow_private=True, _stack=(), _audit=None):
+def validate(sources, user=None, strict=False, allow_private=True, _stack=(), _audit=None, portal_role=None):
     if not isinstance(sources, list) or len(sources) > 512:
         if strict:
             deny()
         return False
     try:
-        audit = _audit if _audit is not None else validation_audit(user)
+        audit = _audit if _audit is not None else validation_audit(user, portal_role)
         for item in union(sources):
             if (item["doctype"] not in FIELDS or not isinstance(item["version"], str)
                     or len(item["version"]) != 64
@@ -144,7 +164,8 @@ def validate(sources, user=None, strict=False, allow_private=True, _stack=(), _a
                 audit["nodes"] += 1
                 if audit["nodes"] > 512 or time.monotonic() - audit["started"] > 10:
                     frappe.throw("来源验证达到本轮有界范围，请缩小上下文。")
-                doc = read_current(item["doctype"], item["name"], user, _stack=_stack, _audit=audit)
+                doc = read_current(item["doctype"], item["name"], user, _stack=_stack, _audit=audit,
+                                   portal_role=audit["portal_role"])
                 audit["memo"][key] = version(doc)
             if audit["memo"][key] != item["version"]:
                 frappe.throw("来源已更新或过期，请重读后重新生成。", frappe.PermissionError)
@@ -156,7 +177,7 @@ def validate(sources, user=None, strict=False, allow_private=True, _stack=(), _a
         return False
 
 
-def reject_cycle(target_doctype, target_name, sources, user=None):
+def reject_cycle(target_doctype, target_name, sources, user=None, portal_role=None):
     """编辑目标不能经其他私人条目再次依赖自身；失败保留原条目。"""
     target = (target_doctype, target_name)
     pending = [item for item in sources if (item["doctype"], item["name"]) != target]
@@ -177,25 +198,27 @@ def reject_cycle(target_doctype, target_name, sources, user=None):
         doc = frappe.get_doc(item["doctype"], item["name"], for_update=True)
         if doc.private_user != (user or frappe.session.user) or doc.site != frappe.local.site:
             deny()
+        if portal_role is not None and doc.portal_role != portal_role:
+            deny()
         pending.extend(loads(doc.sources))
 
 
-def capture(doc):
+def capture(doc, portal_role=None):
     refs = [ref(doc)]
     if doc.doctype in {"RG AI Memory", "RG AI Plan"}:
         refs = union(refs, loads(doc.sources))
     if doc.doctype in {"RG Progress", "RG Discussion Record", "RG Appointment"}:
-        refs = union(refs, capture(read_current("RG Topic", doc.topic)))
+        refs = union(refs, capture(read_current("RG Topic", doc.topic, portal_role=portal_role), portal_role))
     elif doc.doctype == "RG Meeting Report":
-        refs = union(refs, capture(read_current("RG Group Meeting", doc.meeting)))
+        refs = union(refs, capture(read_current("RG Group Meeting", doc.meeting, portal_role=portal_role), portal_role))
     elif doc.doctype == "RG Material Version":
-        refs = union(refs, capture(read_current("RG Meeting Report", doc.report)))
+        refs = union(refs, capture(read_current("RG Meeting Report", doc.report, portal_role=portal_role), portal_role))
     elif doc.doctype == "RG Survey Response":
-        refs = union(refs, capture(read_current("RG Survey", doc.survey)))
+        refs = union(refs, capture(read_current("RG Survey", doc.survey, portal_role=portal_role), portal_role))
     elif doc.doctype == "RG Manuscript Version":
-        refs = union(refs, capture(read_current("RG Manuscript", doc.manuscript)))
+        refs = union(refs, capture(read_current("RG Manuscript", doc.manuscript, portal_role=portal_role), portal_role))
     elif doc.doctype == "RG Manuscript Selection":
-        refs = union(refs, capture(read_current("RG Manuscript Version", doc.manuscript_version)))
+        refs = union(refs, capture(read_current("RG Manuscript Version", doc.manuscript_version, portal_role=portal_role), portal_role))
     return refs
 
 
@@ -204,7 +227,7 @@ def business_dependencies(sources):
     return [item for item in sources if not item["doctype"].startswith("RG AI ")]
 
 
-def links(sources):
+def links(sources, portal_role=None):
     result = []
     for item in sources:
         if item["doctype"].startswith("RG AI "):
@@ -213,7 +236,7 @@ def links(sources):
         from urllib.parse import quote
         name = item["name"]
         if item["doctype"].startswith("RG Manuscript"):
-            doc = read_current(item["doctype"], name)
+            doc = read_current(item["doctype"], name, portal_role=portal_role)
             name = doc.name if doc.doctype == "RG Manuscript" else doc.manuscript
             route = "rg-manuscripts"
         result.append({"doctype": item["doctype"], "name": item["name"], "version": item["version"],

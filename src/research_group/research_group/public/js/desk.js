@@ -1,14 +1,32 @@
 /* Native Desk helpers; no replacement authentication or client-only permissions. */
 window.research_group = window.research_group || {};
 (() => {
-  const boot = frappe.boot || {};
-  const home = boot.research_group_home_route;
-  const portals = boot.research_group_portals || [];
-  const setupComplete = boot.sysdefaults?.setup_complete ?? boot.setup_complete;
+  let managedAliases = [];
+  const standardWorkspaces = new Set(["课题组协作", "教师工作台", "秘书工作台", "学生工作台"]);
+  const appPages = new Set(["rg-teacher-portal", "rg-secretary-portal", "rg-student-portal",
+    "rg-teacher-agent", "rg-secretary-agent", "rg-student-agent", "rg-ai-assistant",
+    "rg-accounts", "rg-meals", "rg-manuscripts"]);
+  const appEntry = item => {
+    if (item.added || item.derived) return false;
+    const target = item.link_to || "";
+    return (item.link_type === "Workspace" && standardWorkspaces.has(target)) ||
+      (["DocType", "Report"].includes(item.link_type) && target.startsWith("RG ")) ||
+      (item.link_type === "Page" && appPages.has(target));
+  };
   // Also runs before a sidebar is rebuilt from a fresh customization payload.
   const normalizeNavigation = () => {
+    const boot = frappe.boot || {};
+    const home = boot.research_group_home_route;
+    const portals = boot.research_group_portals || [];
+    const setupComplete = boot.sysdefaults?.setup_complete ?? boot.setup_complete;
     if (!home || !setupComplete) return;
     frappe.re_route = frappe.re_route || {};
+    for (const alias of managedAliases) {
+      if (alias.table[alias.key] !== alias.value) continue;
+      if (alias.existed) alias.table[alias.key] = alias.previous;
+      else delete alias.table[alias.key];
+    }
+    managedAliases = [];
     const aliases = {"": home, "research-group": home, "课题组协作": home,
       "research-group/课题组协作": home, "Workspaces/课题组协作": home};
     portals.forEach(item => {
@@ -28,27 +46,33 @@ window.research_group = window.research_group || {};
       });
     });
     Object.entries(aliases).forEach(([from, to]) => {
-      frappe.re_route[from] = to;
-      if (from) frappe.re_route[from + "/"] = to;
+      for (const key of (from ? [from, from + "/"] : [from])) {
+        managedAliases.push({table: frappe.re_route, key, value: to,
+          existed: Object.hasOwn(frappe.re_route, key), previous: frappe.re_route[key]});
+        frappe.re_route[key] = to;
+      }
     });
     const sidebar = boot.module_sidebars?.["Research Group"];
     if (!sidebar) return;
     const routes = portals.map(item => item.route);
     const original = sidebar.items || [];
-    const first = original.filter(item => item.link_type === "Page" && routes.includes(item.link_to))
+    const first = original.filter(item => !item.added && !item.derived &&
+      item.link_type === "Page" && routes.includes(item.link_to))
       .map(item => ({...item, child: 0})).sort((a, b) => routes.indexOf(a.link_to) - routes.indexOf(b.link_to));
-    const rest = original.filter(item => !(item.link_type === "Workspace" && Object.hasOwn(destinations, item.link_to)) &&
-      !(item.link_type === "Page" && routes.includes(item.link_to)));
+    const rest = original.filter(item => !appEntry(item) &&
+      !(item.link_type === "Page" && routes.includes(item.link_to) && !item.added && !item.derived));
     boot.module_sidebars["Research Group"] = {...sidebar, items: [...first, ...rest],
-      workspaces: (sidebar.workspaces || []).filter(name => !Object.hasOwn(destinations, name))};
+      workspaces: (sidebar.workspaces || []).filter(name => !standardWorkspaces.has(name))};
   };
   // Register before the initial router.parse(), including bookmarked old URLs.
   normalizeNavigation();
   $(document).on("sidebar_setup", normalizeNavigation);
   const pages = new Set(["rg-teacher-portal", "rg-secretary-portal", "rg-student-portal",
-    "rg-accounts", "rg-meals", "rg-manuscripts", "rg-ai-assistant"]);
+    "rg-accounts", "rg-meals", "rg-manuscripts", "rg-ai-assistant",
+    "rg-teacher-agent", "rg-secretary-agent", "rg-student-agent"]);
   const reports = new Set(["RG Teacher Overview", "RG Student Timeline", "RG Secretary Schedule"]);
   const syncTheme = () => {
+    const home = frappe.boot?.research_group_home_route;
     const route = frappe.get_route() || [];
     const group = pages.has(route[0]) || (!route[0] && !!home) ||
       (["List", "Form", "Tree"].includes(route[0]) && /^RG /.test(route[1] || "")) ||

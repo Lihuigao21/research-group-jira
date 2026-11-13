@@ -19,7 +19,7 @@ from frappe.utils import get_datetime, now_datetime, today
 
 from research_group.ai import AI_DOCTYPES
 from research_group.ai import api
-from research_group.ai.config import DEFAULTS, configuration_version
+from research_group.ai.config import DEFAULTS, DEFAULT_MODEL, configuration_version, public_configuration
 from research_group.ai.context import RunContext
 from research_group.ai.graph import CLARIFY, OUTSIDE
 from research_group.ai.memory import own_item, set_enabled
@@ -98,7 +98,8 @@ class TestAI(IntegrationTestCase):
 
     def conversation(self, key="one"):
         frappe.set_user(self.users[key])
-        name = api.create_conversation()["name"]
+        portal = "secretary" if key == "secretary" else "teacher" if key == "teacher" else "student"
+        name = api.create_conversation(portal)["name"]
         self.conversations.setdefault(key, []).append(name)
         return name
 
@@ -108,10 +109,11 @@ class TestAI(IntegrationTestCase):
         state = guard(conversation=name)
         return RunContext(self.users[key], name, "", state["versions"], sources=sources or [])
 
-    def chat(self, prompt="虚构站内操作说明", key="one", topic=None, provider=None, conversation=None, selections=None):
+    def chat(self, prompt="虚构站内操作说明", key="one", topic=None, provider=None, conversation=None,
+             selections=None, reasoning=None):
         name = conversation or self.conversation(key)
         frappe.set_user(self.users[key])
-        result = submit(name, prompt, topic, enqueue_job=False, selections=selections)
+        result = submit(name, prompt, topic, enqueue_job=False, selections=selections, reasoning=reasoning)
         errors = []
         target = provider or OfflineProvider()
         class DiagnosticProvider:
@@ -170,8 +172,9 @@ class TestAI(IntegrationTestCase):
                                  (api.get_operation, (operation["name"],))):
                 with self.assertRaises(frappe.PermissionError):
                     method(*args)
-            self.assertEqual(api.private_items("memory")["items"], [])
-            self.assertEqual(api.private_items("plan")["items"], [])
+            portal = "teacher" if key == "teacher" else "student"
+            self.assertEqual(api.private_items("memory", portal)["items"], [])
+            self.assertEqual(api.private_items("plan", portal)["items"], [])
             for dt, name in (("RG AI Conversation", conversation), ("RG AI Memory", memory), ("RG AI Plan", plan)):
                 with self.assertRaises(frappe.PermissionError):
                     native_get(dt, name)
@@ -179,8 +182,136 @@ class TestAI(IntegrationTestCase):
                 with self.assertRaises(frappe.PermissionError):
                     frappe.get_list(dt, fields=["name"])
         frappe.set_user(self.users["one"])
-        self.assertEqual(api.private_items("memory")["items"][0]["content"], "A的私人长期记忆")
+        self.assertEqual(api.private_items("memory", "student")["items"][0]["content"], "A的私人长期记忆")
         self.assertFalse(frappe.get_all("Version", filters={"ref_doctype": ["in", list(AI_DOCTYPES)]}))
+
+    def test_same_user_workspaces_keep_history_memory_plans_and_tools_separate(self):
+        from research_group.ai.tools import available
+        frappe.set_user(self.users["secretary"])
+        secretary = api.create_conversation("secretary")["name"]
+        student = api.create_conversation("student")["name"]
+        for portal, conversation in (("secretary", secretary), ("student", student)):
+            state = guard(conversation=conversation)
+            ctx = RunContext(self.users["secretary"], conversation, "", state["versions"])
+            memory = propose(ctx, "memory_change", {"change": "add", "kind": "preference",
+                                                     "content": portal + " private memory"})
+            decide(memory["name"], "confirm")
+            state = guard(conversation=conversation)
+            ctx = RunContext(self.users["secretary"], conversation, "", state["versions"])
+            plan = propose(ctx, "plan_change", {"change": "add", "content": portal + " private plan"})
+            decide(plan["name"], "confirm")
+        self.assertEqual([row["name"] for row in api.list_conversations("secretary")["items"]], [secretary])
+        self.assertEqual([row["name"] for row in api.list_conversations("student")["items"]], [student])
+        self.assertEqual(api.private_items("memory", "secretary")["items"][0]["content"], "secretary private memory")
+        self.assertEqual(api.private_items("memory", "student")["items"][0]["content"], "student private memory")
+        self.assertEqual(api.private_items("plan", "secretary")["items"][0]["content"], "secretary private plan")
+        self.assertEqual(api.private_items("plan", "student")["items"][0]["content"], "student private plan")
+        with self.assertRaises(frappe.PermissionError):
+            api.bootstrap()
+        with self.assertRaises(frappe.PermissionError):
+            api.create_conversation()
+        with self.assertRaises(frappe.PermissionError):
+            api.propose_change(secretary, "progress", {"topic": self.topics["secretary"],
+                                                       "progress_date": today(), "summary": "不能从秘书端写进展",
+                                                       "next_milestone": "下一步"})
+        self.assertNotIn("propose_progress", available(guard(conversation=secretary)["roles"]))
+        self.assertIn("propose_progress", available(guard(conversation=student)["roles"]))
+        student_source = capture(read_current("RG Topic", self.topics["secretary"],
+                                              portal_role="student"), portal_role="student")
+        secretary_state = guard(conversation=secretary)
+        with self.assertRaises(frappe.PermissionError):
+            propose(RunContext(self.users["secretary"], secretary, "", secretary_state["versions"],
+                               sources=student_source), "memory_change",
+                    {"change": "add", "kind": "preference", "content": "跨角色来源"})
+        api.set_memory_enabled(False, "student")
+        self.assertFalse(api.bootstrap("student")["memory_enabled"])
+        self.assertTrue(api.bootstrap("secretary")["memory_enabled"])
+        run = submit(secretary, "秘书站内问卷", enqueue_job=False)
+        self.assertEqual(api.get_run(run["run_id"])["portal"], "secretary")
+        api.cancel_run(run["run_id"])
+        secretary_state = guard(conversation=secretary)
+        pending = propose(RunContext(self.users["secretary"], secretary, "", secretary_state["versions"]),
+                          "plan_change", {"change": "add", "content": "撤权后不可确认"})
+        frappe.db.sql("DELETE FROM `tabHas Role` WHERE parent=%s AND parenttype='User' AND role=%s",
+                      (self.users["secretary"], SECRETARY))
+        with self.assertRaises(frappe.PermissionError):
+            api.get_conversation(secretary)
+        with self.assertRaises(frappe.PermissionError):
+            api.get_run(run["run_id"])
+        with self.assertRaises(frappe.PermissionError):
+            decide(pending["name"], "confirm")
+        self.assertEqual(api.get_conversation(student)["portal"], "student")
+
+    def test_legacy_rows_are_owner_read_only_and_never_enter_new_context(self):
+        from research_group.ai.security import migrate_legacy_roles
+        frappe.set_user(self.users["one"])
+        old = insert("RG AI Conversation", self.users["one"], portal_role="legacy", title="旧混合会话",
+                     status="active", context_version=1)
+        insert("RG AI Message", self.users["one"], conversation=old.name, sequence=1, role="user",
+               content="旧混合原文", sources="[]", request_id="")
+        memory = insert("RG AI Memory", self.users["one"], conversation=old.name, kind="preference",
+                        content="旧混合记忆", sources="[]", status="active", context_version=1)
+        plan = insert("RG AI Plan", self.users["one"], conversation=old.name, content="旧混合计划",
+                      sources="[]", status="active", context_version=1)
+        operation = insert("RG AI Operation", self.users["one"], conversation=old.name, action="memory_change",
+                           status="pending", parameters="{}", preview="{}", sources="[]")
+        run = insert("RG AI Run", self.users["one"], conversation=old.name, status="queued", mode="mock",
+                     expected="{}", selection_ids="[]", tool_order="[]")
+        tombstone = insert("RG AI Tombstone", self.users["one"], portal_role="legacy",
+                           target_doctype="RG AI Plan", target_name=plan.name, deleted_at=now_datetime())
+        frappe.db.sql("UPDATE `tabRG AI Conversation` SET portal_role=NULL WHERE name=%s", (old.name,))
+        frappe.db.sql("UPDATE `tabRG AI Message` SET portal_role=NULL WHERE conversation=%s", (old.name,))
+        for doctype, name in (("RG AI Memory", memory.name), ("RG AI Plan", plan.name),
+                              ("RG AI Operation", operation.name), ("RG AI Run", run.name),
+                              ("RG AI Tombstone", tombstone.name)):
+            frappe.db.sql(f"UPDATE `tab{doctype}` SET portal_role=NULL WHERE name=%s", (name,))
+        migrate_legacy_roles()
+        self.assertEqual(frappe.db.get_value("RG AI Conversation", old.name, "portal_role"), "legacy")
+        for doctype, name in (("RG AI Memory", memory.name), ("RG AI Plan", plan.name),
+                              ("RG AI Operation", operation.name), ("RG AI Run", run.name),
+                              ("RG AI Tombstone", tombstone.name)):
+            self.assertEqual(frappe.db.get_value(doctype, name, "portal_role"), "legacy")
+        self.assertEqual(frappe.db.get_value("RG AI Run", run.name, "status"), "cancelled")
+        self.assertEqual(api.list_legacy_conversations()["items"][0]["name"], old.name)
+        self.assertEqual(api.get_legacy_conversation(old.name)["messages"][0]["content"], "旧混合原文")
+        self.assertEqual(api.list_legacy_items("memory")["items"][0]["content"], "旧混合记忆")
+        self.assertEqual(api.list_legacy_items("memory")["items"][0]["kind"], "preference")
+        self.assertEqual(api.list_legacy_items("plan")["items"][0]["content"], "旧混合计划")
+        self.assertEqual(api.get_legacy_conversation(old.name)["operations"][0]["name"], operation.name)
+        self.assertTrue(api.get_legacy_conversation(old.name)["operations"][0]["read_only"])
+        for bad in ("not-a-cursor", {}, []):
+            with self.assertRaises(frappe.PermissionError):
+                api.get_legacy_conversation(old.name, before=bad)
+        with self.assertRaises(frappe.PermissionError):
+            api.list_legacy_items([])
+        fresh = api.create_conversation("student")["name"]
+        self.assertNotIn(old.name, [row["name"] for row in api.list_conversations("student")["items"]])
+        self.assertEqual(api.private_items("memory", "student")["items"], [])
+        with self.assertRaises(frappe.PermissionError):
+            api.get_conversation(old.name)
+        with self.assertRaises(frappe.PermissionError):
+            submit(old.name, "站内旧会话不能续写", enqueue_job=False)
+        with self.assertRaises(frappe.PermissionError):
+            decide(operation.name, "confirm")
+        self.assertEqual(api.get_conversation(fresh)["portal"], "student")
+        self.assertEqual(frappe.db.get_value("RG AI Memory", memory.name, "content"), "旧混合记忆")
+
+    def test_legacy_disabled_memory_preference_is_inherited_per_workspace(self):
+        user = self.users["secretary"]
+        frappe.set_user(user)
+        old_name = hashlib.sha256(("user:" + user).encode()).hexdigest()[:32]
+        insert("RG AI State", user, name=old_name, portal_role="legacy", context_version=1,
+               memory_enabled=0, auth_version=0)
+        frappe.db.sql("UPDATE `tabRG AI State` SET portal_role=NULL WHERE name=%s", (old_name,))
+        from research_group.ai.security import migrate_legacy_roles
+        migrate_legacy_roles()
+        self.assertEqual(frappe.db.get_value("RG AI State", old_name, "portal_role"), "legacy")
+        self.assertFalse(api.bootstrap("student")["memory_enabled"])
+        self.assertFalse(api.bootstrap("secretary")["memory_enabled"])
+        api.set_memory_enabled(True, "secretary")
+        self.assertTrue(api.bootstrap("secretary")["memory_enabled"])
+        self.assertFalse(api.bootstrap("student")["memory_enabled"])
+        self.assertEqual(frappe.db.get_value("RG AI State", old_name, "memory_enabled"), 0)
 
     def test_literal_private_text_json_and_confirm_hash_survive_persistence(self):
         # These are plain strings rendered through textContent. Native document
@@ -334,14 +465,16 @@ class TestAI(IntegrationTestCase):
         from research_group.services import assign_reporter, publish_meeting
 
         frappe.set_user("Administrator")
-        for number in range(20):
-            email = f"{self.prefix}-a{number:02d}@example.invalid"
-            self.users[f"schedule_{number}"] = email
-            frappe.get_doc({"doctype": "User", "email": email, "first_name": "虚构切片报告人",
-                            "user_type": "System User", "enabled": 1, "send_welcome_email": 0,
-                            "roles": [{"role": STUDENT}]}).insert(ignore_permissions=True)
-            frappe.get_doc({"doctype": "RG Member", "user": email, "display_name": "虚构切片报告人",
-                            "active": 1, "is_demo": 1}).insert(ignore_permissions=True)
+        # Fixture creation can overlap the framework's one-minute user throttle.
+        with patch.dict(frappe.local.conf, {"throttle_user_limit": 500}):
+            for number in range(20):
+                email = f"{self.prefix}-a{number:02d}@example.invalid"
+                self.users[f"schedule_{number}"] = email
+                frappe.get_doc({"doctype": "User", "email": email, "first_name": "虚构切片报告人",
+                                "user_type": "System User", "enabled": 1, "send_welcome_email": 0,
+                                "roles": [{"role": STUDENT}]}).insert(ignore_permissions=True)
+                frappe.get_doc({"doctype": "RG Member", "user": email, "display_name": "虚构切片报告人",
+                                "active": 1, "is_demo": 1}).insert(ignore_permissions=True)
         frappe.set_user(self.users["secretary"])
         start = (now_datetime() + timedelta(days=2)).replace(hour=14, minute=0, second=0, microsecond=0)
         meeting = frappe.get_doc({"doctype": "RG Group Meeting", "title": self.prefix + "有界报告排期",
@@ -373,7 +506,7 @@ class TestAI(IntegrationTestCase):
         candidate = frappe.get_doc("RG AI Memory", pending.target)
         self.assertEqual(candidate.status, "candidate")
         self.assertGreater(get_datetime(candidate.expires_at), now_datetime() + timedelta(days=6))
-        self.assertFalse(api.private_items("memory")["items"][0]["status"] == "active")
+        self.assertFalse(api.private_items("memory", "student")["items"][0]["status"] == "active")
         result = decide(proposal["name"], "confirm")
         item = own_item("RG AI Memory", result["result"]["name"], ctx.user)
         self.assertEqual(item.status, "active")
@@ -384,13 +517,13 @@ class TestAI(IntegrationTestCase):
         item.reload(); self.assertIsNone(item.expires_at)
         ctx = self.ctx(conversation=ctx.conversation)
         old = propose(ctx, "plan_change", {"change": "add", "content": "旧预览"})
-        set_enabled(False)
+        set_enabled(False, "student")
         self.assertEqual(decide(old["name"], "confirm")["status"], "cancelled")
         ctx = self.ctx(conversation=ctx.conversation)
         deletion = propose(ctx, "memory_change", {"change": "delete", "name": item.name})
         decide(deletion["name"], "confirm")
         self.assertEqual(frappe.db.get_value("RG AI Memory", item.name, "content"), "")
-        self.assertEqual(api.private_items("memory")["items"], [])
+        self.assertEqual(api.private_items("memory", "student")["items"], [])
 
     def test_expired_active_memory_reactivation_respects_count_and_live_edit_at_cap(self):
         live, conversation = self.memory("仍有效的条目")
@@ -413,26 +546,26 @@ class TestAI(IntegrationTestCase):
         plan = api.propose_change(conversation, "plan_change", {"change": "add", "content": "满额后仍可删除的计划"})
         plan_name = decide(plan["name"], "confirm")["result"]["name"]
         alternate = self.conversation()
-        storage = api.bootstrap()["storage"]
+        storage = api.bootstrap("student")["storage"]
         frappe.conf.rg_ai_limits.update(user_bytes=storage["user_bytes"], site_bytes=storage["site_bytes"])
-        self.assertEqual(api.bootstrap()["storage"]["user_bytes"], storage["user_bytes"])
-        self.assertEqual(api.bootstrap()["storage"]["site_bytes"], storage["site_bytes"])
+        self.assertEqual(api.bootstrap("student")["storage"]["user_bytes"], storage["user_bytes"])
+        self.assertEqual(api.bootstrap("student")["storage"]["site_bytes"], storage["site_bytes"])
         self.assertEqual(api.get_conversation(conversation)["name"], conversation)
-        for action in (api.create_conversation, lambda: submit(conversation, "不应写入满额存储", enqueue_job=False),
+        for action in (lambda: api.create_conversation("student"), lambda: submit(conversation, "不应写入满额存储", enqueue_job=False),
                        lambda: api.propose_change(conversation, "memory_change", {"change": "add", "kind": "preference", "content": "不得新增"})):
             with self.assertRaises(frappe.ValidationError):
                 action()
         for kind, name, doctype in (("memory", memory, "RG AI Memory"), ("plan", plan_name, "RG AI Plan")):
             if kind == "plan":
                 frappe.conf.rg_ai_limits.update(user_bytes=1, site_bytes=1)
-            self.assertTrue(api.private_items(kind)["items"])
-            self.assertGreaterEqual(api.bootstrap()["storage"]["user_bytes"], frappe.conf.rg_ai_limits["user_bytes"])
+            self.assertTrue(api.private_items(kind, "student")["items"])
+            self.assertGreaterEqual(api.bootstrap("student")["storage"]["user_bytes"], frappe.conf.rg_ai_limits["user_bytes"])
             operation = api.propose_change(conversation, kind + "_change", {"change": "delete", "name": name})
-            initial_bytes = api.bootstrap()["storage"]["user_bytes"]
+            initial_bytes = api.bootstrap("student")["storage"]["user_bytes"]
             for repeat in range(30):
                 again = api.propose_change(conversation, kind + "_change", {"change": "delete", "name": name})
                 self.assertEqual(again["name"], operation["name"])
-            self.assertEqual(api.bootstrap()["storage"]["user_bytes"], initial_bytes)
+            self.assertEqual(api.bootstrap("student")["storage"]["user_bytes"], initial_bytes)
             moved = api.propose_change(alternate, kind + "_change", {"change": "delete", "name": name})
             self.assertEqual(moved["name"], operation["name"])
             self.assertEqual(frappe.db.get_value("RG AI Operation", moved["name"], "conversation"), alternate)
@@ -454,9 +587,11 @@ class TestAI(IntegrationTestCase):
         ctx = self.ctx(conversation=conversation)
         ctx.run = queued["run_id"]
         selected = propose(ctx, "plan_change", {"change": "add", "content": "本轮应取消的预览"})
-        # An inconsistent private fixture also proves the UPDATE is owner-bound.
-        other = insert("RG AI Operation", self.users["two"], conversation=conversation, run_id=ctx.run,
+        # Another owner's independent operation must remain untouched.
+        other_conversation = self.conversation("two")
+        other = insert("RG AI Operation", self.users["two"], conversation=other_conversation,
                        action="plan_change", status="pending", parameters='{"private":"other"}', preview='{}', sources='[]')
+        frappe.set_user(self.users["one"])
         self.assertEqual(api.cancel_run(ctx.run)["status"], "cancelled")
         self.assertEqual(frappe.db.get_value("RG AI Operation", selected["name"], "status"), "cancelled")
         self.assertEqual(frappe.db.get_value("RG AI Operation", selected["name"], "parameters"), "")
@@ -469,9 +604,9 @@ class TestAI(IntegrationTestCase):
         newer = self.conversation()
         frappe.db.set_value("RG AI Conversation", old, "modified", now_datetime() - timedelta(days=2), update_modified=False)
         frappe.db.set_value("RG AI Conversation", newer, "modified", now_datetime() - timedelta(days=1), update_modified=False)
-        self.assertEqual(api.list_conversations()["items"][0]["name"], newer)
+        self.assertEqual(api.list_conversations("student")["items"][0]["name"], newer)
         submit(old, "使旧会话重新活跃", enqueue_job=False)
-        self.assertEqual(api.list_conversations()["items"][0]["name"], old)
+        self.assertEqual(api.list_conversations("student")["items"][0]["name"], old)
 
     def test_all_injected_dependencies_survive_copy_and_are_blocked_after_update(self):
         discussion = self.discussion()
@@ -489,9 +624,9 @@ class TestAI(IntegrationTestCase):
         frappe.set_user(self.users["teacher"])
         update_teacher_feedback(discussion, "已变化的教师反馈")
         frappe.set_user(self.users["one"])
-        memories = api.private_items("memory")["items"]
+        memories = api.private_items("memory", "student")["items"]
         self.assertTrue(all(item["stale"] and "屏蔽" in item["content"] for item in memories))
-        self.assertTrue(api.private_items("plan")["items"][0]["stale"])
+        self.assertTrue(api.private_items("plan", "student")["items"][0]["stale"])
 
     def test_private_dependency_cycle_rejected_and_shared_ancestors_memoized(self):
         from research_group.ai import sources
@@ -764,6 +899,8 @@ class TestAI(IntegrationTestCase):
                         self.assertEqual(result["url"], "/desk/rg-" + portal + "-portal")
                         self.assertFalse(result["performed_action"])
                         self.assertEqual(bootstrap(portal)["portal"], portal)
+                    self.assertEqual(dispatch(ctx, "guide_site", {"feature": "ai"})["url"],
+                                     "/desk/rg-" + portal + "-agent")
                     if key == "one":
                         self.assertIn("本人通知状态", result["description"])
                         self.assertFalse(bootstrap(portal)["can_message"])
@@ -877,6 +1014,25 @@ class TestAI(IntegrationTestCase):
         frappe.set_user(self.users["two"])
         with self.assertRaises(frappe.PermissionError):
             submit(self.conversation("two"), "论文选段", selections=[selected["name"]], enqueue_job=False)
+
+    def test_dual_role_secretary_agent_cannot_read_or_propose_student_manuscript(self):
+        from research_group import manuscripts
+        from research_group.tests.test_manuscripts import docx_bytes
+
+        frappe.set_user(self.users["secretary"])
+        manuscript = manuscripts.create_manuscript("虚构双身份选段", self.users["teacher"], self.topics["secretary"])
+        version = manuscripts.submit_version(manuscript["name"], 0, "draft.docx", docx_bytes())
+        paragraph = manuscripts.get_version_text(version["name"])["paragraphs"][0]["text"]
+        selected = manuscripts.create_selection(version["name"], paragraph[:2000], "paragraph:0")
+        self.assertEqual(read_current("RG Manuscript Selection", selected["name"],
+                                      portal_role="student").name, selected["name"])
+        secretary = api.create_conversation("secretary")["name"]
+        with self.assertRaises(frappe.PermissionError):
+            read_current("RG Manuscript Selection", selected["name"], portal_role="secretary")
+        with self.assertRaises(frappe.PermissionError):
+            api.propose_change(secretary, "manuscript_suggestion", {
+                "selection": selected["name"], "suggestion": "越界建议", "reason": "秘书端不能使用学生论文工具"})
+        self.assertEqual(frappe.db.count("RG Manuscript Review", {"manuscript": manuscript["name"]}), 0)
 
     def test_selection_ids_in_prompt_cannot_authorize_a_manuscript_tool(self):
         from research_group.ai.tools import dispatch
@@ -1095,13 +1251,14 @@ class TestAI(IntegrationTestCase):
                 self.configuration_patch.start()
 
     def sdk_run(self, protocol, tool=False, usage=True, illegal=False, timeout=False, loop=False,
-                context_limit=None, conversation=None, after_request=None, final_text=None, read_tool=None):
+                context_limit=None, conversation=None, after_request=None, final_text=None, read_tool=None,
+                reasoning=None, configured_model="fictional-sdk-model"):
         import httpx
         frappe.conf.rg_ai_mode = "langchain"
         frappe.conf.rg_ai_real_enabled = True
         frappe.conf.rg_ai_base_url = "https://mock.invalid/v1"
         frappe.conf.rg_ai_allowed_base_urls = ["https://mock.invalid/v1"]
-        frappe.conf.rg_ai_model = "fictional-sdk-model"
+        frappe.conf.rg_ai_model = configured_model
         frappe.conf.rg_ai_api_key = "fictional-key-never-sent-to-network"
         frappe.conf.rg_ai_protocol = protocol
         frappe.conf.rg_ai_limits = {"minute_runs": 500, "daily_runs": 5000, "run_seconds": 1 if timeout else 90}
@@ -1143,8 +1300,36 @@ class TestAI(IntegrationTestCase):
             return httpx.Response(200, json=body)
         # MockTransport接管完整SDK HTTP通路；没有DNS、外网或真实key。
         result = self.chat("虚构SDK站内离线联调", provider=LangChainProvider(transport=httpx.MockTransport(handler)),
-                           conversation=conversation)
+                           conversation=conversation, reasoning=reasoning)
         return result, requests
+
+    def test_reasoning_effort_default_validation_persistence_and_provider_payload(self):
+        conversation = self.conversation()
+        pending = submit(conversation, "本站默认推理档位", enqueue_job=False)
+        self.assertEqual(pending["reasoning_effort"], "medium")
+        self.assertEqual(frappe.db.get_value("RG AI Run", pending["run_id"], "reasoning_effort"), "medium")
+        api.cancel_run(pending["run_id"])
+        for invalid in ("ultra", "HIGH", "", 1, [], {}):
+            with self.subTest(invalid=invalid), self.assertRaises(frappe.ValidationError):
+                submit(conversation, "本站非法推理档位", enqueue_job=False, reasoning=invalid)
+        for protocol in ("responses", "chat_completions"):
+            for effort in ("low", "medium", "high"):
+                with self.subTest(protocol=protocol, effort=effort):
+                    result, requests = self.sdk_run(protocol, reasoning=effort)
+                    self.assertEqual(result["status"], "completed", result)
+                    self.assertEqual(result["reasoning_effort"], effort)
+                    self.assertEqual(frappe.db.get_value("RG AI Run", result["run_id"], "reasoning_effort"), effort)
+                    self.assertEqual(len(requests), 1)
+                    actual = (requests[0].get("reasoning", {}).get("effort") if protocol == "responses"
+                              else requests[0].get("reasoning_effort"))
+                    self.assertEqual(actual, effort, requests[0])
+
+    def test_default_model_is_advertised_and_sent_without_site_override(self):
+        frappe.conf.rg_ai_model = None
+        self.assertEqual(public_configuration()["model"], DEFAULT_MODEL)
+        result, requests = self.sdk_run("responses", configured_model=None)
+        self.assertEqual(result["status"], "completed", result)
+        self.assertEqual(requests[0]["model"], DEFAULT_MODEL)
 
     def test_independent_double_confirm_is_atomic_and_idempotent(self):
         ctx = self.ctx()
@@ -1162,7 +1347,7 @@ class TestAI(IntegrationTestCase):
         self.assertEqual(sum(row["ok"] for row in results), 1, results)
         accepted = next(row["result"]["run_id"] for row in results if row["ok"])
         frappe.set_user(self.users["one"])
-        set_enabled(False); frappe.db.commit()
+        set_enabled(False, "student"); frappe.db.commit()
         class Forbidden:
             def run(self, ctx, prompt):
                 raise AssertionError("旧排队请求不应调用模型")
@@ -1231,7 +1416,7 @@ class TestAI(IntegrationTestCase):
                         if phase == "invalidated":
                             frappe.set_user(self.users["one"])
                             if invalidation == "cancel": api.cancel_run(active["run_id"])
-                            else: set_enabled(False)
+                            else: set_enabled(False, "student")
                             frappe.db.commit()
                             with self.assertRaises(frappe.ValidationError):
                                 submit(first, "在途请求未退出前不得再次准入", enqueue_job=False)
@@ -1268,7 +1453,7 @@ class TestAI(IntegrationTestCase):
                         for identifier in registry.get_job_ids():
                             Job.fetch(identifier, connection=queue.connection).delete()
                     queue.delete(delete_jobs=True)
-            frappe.set_user(self.users["one"]); set_enabled(True); frappe.db.commit()
+            frappe.set_user(self.users["one"]); set_enabled(True, "student"); frappe.db.commit()
 
     def test_independent_native_revocations_win_before_confirmation(self):
         for change in ("user", "member", "role"):
@@ -1306,7 +1491,7 @@ class TestAI(IntegrationTestCase):
                             self.fail("在途独立连接未到达模型边界：" + err[-2000:] + out[-500:])
                         time.sleep(0.03)
                     frappe.db.rollback(); frappe.set_user(self.users["one"])
-                    if action == "close_memory": set_enabled(False)
+                    if action == "close_memory": set_enabled(False, "student")
                     elif action == "delete_conversation": api.remove_conversation(conversation)
                     else:
                         ctx = self.ctx(conversation=conversation)
@@ -1320,7 +1505,7 @@ class TestAI(IntegrationTestCase):
                     self.assertFalse(frappe.db.count("RG AI Message", {"request_id": queued["run_id"], "role": "assistant"}))
                 finally:
                     if process.poll() is None: process.kill(); process.communicate(timeout=3)
-            frappe.set_user(self.users["one"]); set_enabled(True); frappe.db.commit()
+            frappe.set_user(self.users["one"]); set_enabled(True, "student"); frappe.db.commit()
 
     def worker(self, folder, number, job):
         code = "from research_group.tests.test_ai import race_worker; race_worker()"

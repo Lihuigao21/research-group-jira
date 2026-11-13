@@ -320,7 +320,8 @@ def literal_round_trip(args, receipt, author, teacher, licensed_docx):
     def ai(method, data=None):
         return author.request("/api/method/research_group.ai.api." + method, "POST", data or {})
 
-    conversation = success(receipt, "literal AI private draft conversation", ai("create_conversation"))
+    conversation = success(receipt, "literal AI private draft conversation", ai("create_conversation", {
+        "portal": "student"}))
     receipt.artifact("literal_ai_conversation", conversation["name"])
     pending = success(receipt, "literal AI suggestion independent preview", ai("propose_change", {
         "conversation": conversation["name"], "action": "manuscript_suggestion",

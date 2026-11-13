@@ -1,6 +1,6 @@
 # 受控 AI 助手
 
-当前实现使用 LangChain 模型适配与 LangGraph 显式流程，固定依赖见 `src/research_group/pyproject.toml`。默认 `rg_ai_mode=mock`，无需 API key；真实模型尚未联调。站内范围判定用于引导工作，服务端权限与固定工具白名单负责阻止越权。
+当前实现使用 LangChain 模型适配与 LangGraph 显式流程，固定依赖见 `src/research_group/pyproject.toml`。默认 `rg_ai_mode=mock`，无需 API key；页面默认显示 `gpt-6.1-sol`，真实模型尚未联调。教师、秘书、学生各自从工作台进入独立 Agent，服务端按会话绑定角色划分历史、记忆、计划和工具。旧混合历史仅供只读回看。站内范围判定用于引导工作，服务端权限与固定工具白名单负责阻止越权。
 
 ## 身份、会话与记忆
 

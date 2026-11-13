@@ -44,6 +44,8 @@ def after_migrate():
     frappe.db.add_unique("RG Survey Response", ["survey", "respondent"], "rg_unique_survey_respondent")
     from research_group.ai.security import install_state
     install_state()
+    from research_group.ai.security import migrate_legacy_roles
+    migrate_legacy_roles()
     for doctype in ("RG AI Conversation", "RG AI Memory", "RG AI Plan", "RG AI Operation", "RG AI Run"):
         frappe.db.add_index(doctype, ["private_user", "status", "modified"], "rg_ai_owner_state")
     frappe.db.add_unique("RG AI Message", ["conversation", "sequence"], "rg_ai_message_sequence")
@@ -140,14 +142,29 @@ def boot_session(bootinfo):
     sidebars = deepcopy(bootinfo.get("module_sidebars") or {})
     sidebar = sidebars.get("Research Group")
     if sidebar:
-        routes = {item["route"] for item in available}
+        routes = [item["route"] for item in available]
         items = sidebar.get("items", [])
-        portals = [{**item, "child": 0} for item in items
-                   if item.get("link_type") == "Page" and item.get("link_to") in routes]
-        portals.sort(key=lambda item: [value["route"] for value in available].index(item["link_to"]))
-        sidebar["items"] = portals + [item for item in items
-            if not (item.get("link_type") == "Workspace" and item.get("link_to") in removed)
-            and not (item.get("link_type") == "Page" and item.get("link_to") in routes)]
+        # Only the app's role entries remain in its shell. User and site added
+        # items, including private pages, keep their resolved payload unchanged.
+        portals = [{**item, "child": 0} for item in items if not item.get("added")
+                   and not item.get("derived") and item.get("link_type") == "Page"
+                   and item.get("link_to") in routes]
+        portals.sort(key=lambda item: routes.index(item["link_to"]))
+        def app_entry(item):
+            if item.get("added") or item.get("derived"):
+                return False
+            kind, target = item.get("link_type"), item.get("link_to") or ""
+            return ((kind == "Workspace" and target in legacy)
+                    or (kind in {"DocType", "Report"} and target.startswith("RG "))
+                    or (kind == "Page" and target in {
+                        "rg-teacher-portal", "rg-secretary-portal", "rg-student-portal",
+                        "rg-teacher-agent", "rg-secretary-agent", "rg-student-agent",
+                        "rg-ai-assistant", "rg-accounts", "rg-meals", "rg-manuscripts"}))
+
+        custom = [item for item in items if not app_entry(item)
+                  and not (item.get("link_type") == "Page" and item.get("link_to") in routes
+                           and not item.get("added") and not item.get("derived"))]
+        sidebar["items"] = portals + custom
         sidebar["workspaces"] = [name for name in sidebar.get("workspaces", []) if name not in removed]
         bootinfo.module_sidebars = sidebars
 

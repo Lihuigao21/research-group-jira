@@ -1,0 +1,12 @@
+{
+  "doctype": "Page",
+  "name": "rg-teacher-agent",
+  "page_name": "rg-teacher-agent",
+  "title": "教师 AI 助手",
+  "module": "Research Group",
+  "standard": "Yes",
+  "system_page": 0,
+  "roles": [
+    {"role": "课题组教师"}
+  ]
+}

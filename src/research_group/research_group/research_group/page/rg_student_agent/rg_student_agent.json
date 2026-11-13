@@ -1,0 +1,12 @@
+{
+  "doctype": "Page",
+  "name": "rg-student-agent",
+  "page_name": "rg-student-agent",
+  "title": "学生 AI 助手",
+  "module": "Research Group",
+  "standard": "Yes",
+  "system_page": 0,
+  "roles": [
+    {"role": "课题组学生"}
+  ]
+}

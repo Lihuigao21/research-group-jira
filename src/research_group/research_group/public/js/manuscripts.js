@@ -80,7 +80,7 @@
           }
           const actions = $("<div class='rg-portal-actions'></div>").appendTo(versionDetails);
           if (manuscript.reviewer === this.user) UI.button(actions, "为本版追加教师意见", () => this.comment(row, name, area, ticket));
-          UI.button(actions, "选择本人授权段落并获取 AI 建议", () => this.selection(row, versionDetails));
+          UI.button(actions, "选择本人授权段落并获取 AI 建议", () => this.selection(row, versionDetails, manuscript));
         };
         versionsSelect.on("change", renderVersion); renderVersion();
         const moreVersions = UI.button(versionArea, "读取更早文件版本", async () => {
@@ -205,7 +205,7 @@
         catch (error) { UI.error(dialog.$wrapper, error); } finally { dialog.enable_primary_action(); }
       }}); dialog.show();
     }
-    async selection(version, area) {
+    async selection(version, area, manuscript) {
       const pageEpoch = this.epoch, detailEpoch = this.detailEpoch;
       const route = frappe.get_route().join("/");
       area.find(".rg-manuscript-selection").remove();
@@ -244,21 +244,27 @@
           && text.val() === snapshot.text && anchor.val() === snapshot.anchor
           && requirements.val() === snapshot.requirements && consent.prop("checked");
         if (!stillAuthorized()) throw new Error("选段或页面已变化，请重新核对选段。");
+        const agentPortal = manuscript.author === this.user ? "student"
+          : manuscript.reviewer === this.user ? "teacher" : null;
+        if (!agentPortal) throw new Error("当前论文不属于可用的 AI 工作台。");
         const selected = await UI.api("manuscripts", "create_selection", {version: version.name, original_text: snapshot.text, anchor: snapshot.anchor});
         if (!stillAuthorized()) throw new Error("选段或页面已变化，本次尚未发送给 AI；请重新核对选段。");
-        const conversation = await UI.api("ai.api", "create_conversation");
+        const agentRoute = "rg-" + agentPortal + "-agent";
+        const conversation = await UI.api("ai.api", "create_conversation", {portal: agentPortal});
         if (!stillAuthorized()) throw new Error("选段或页面已变化，本次尚未发送给 AI；请重新核对选段。");
         rg.pendingAIConversation = conversation.name;
+        rg.pendingAIPortal = agentPortal;
         try {
           await UI.api("ai.api", "send_message", {conversation: conversation.name,
-            prompt: snapshot.requirements || "请对本人授权的论文选段给出修改建议并说明理由。", selections: [selected.name]});
+            prompt: snapshot.requirements || "请对本人授权的论文选段给出修改建议并说明理由。",
+            selections: [selected.name], reasoning_effort: "medium"});
         } catch (_) {
           if (!stillAuthorized()) return;
           UI.text(box, "未收到本轮入队回执，请在 AI 助手查看本人会话与本轮状态，避免重复发送。", "rg-portal-note");
-          UI.button(box, "打开 AI 助手核对本轮状态", () => UI.go("rg-ai-assistant"));
+          UI.button(box, "打开 AI 助手核对本轮状态", () => UI.go(agentRoute));
           return;
         }
-        if (stillAuthorized()) UI.go("rg-ai-assistant");
+        if (stillAuthorized()) UI.go(agentRoute);
       }, true);
     }
   }

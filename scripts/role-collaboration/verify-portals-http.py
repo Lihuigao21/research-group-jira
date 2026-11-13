@@ -22,12 +22,14 @@ import acceptance_config as cfg
 TASK = cfg.current().task_dir
 PORTALS = {"teacher": {"teacher"}, "one": {"student"}, "two": {"student"},
            "secretary": {"secretary", "student"}}
-ROLES = {"teacher": {"课题组教师"}, "one": {"课题组学生"}, "two": {"课题组学生"},
-         "secretary": {"课题组秘书", "课题组学生"}}
+PORTAL_ROLES = {"teacher": "课题组教师", "secretary": "课题组秘书", "student": "课题组学生"}
 NAVIGATION = {"topics": "List/RG Topic", "appointments": "List/RG Appointment",
               "materials": "List/RG Meeting Report", "surveys": "List/RG Survey",
-              "meals": "rg-meals", "manuscripts": "rg-manuscripts", "accounts": "rg-accounts",
-              "assistant": "rg-ai-assistant"}
+              "meals": "rg-meals", "manuscripts": "rg-manuscripts", "accounts": "rg-accounts"}
+
+
+def route(item, portal):
+    return "rg-" + portal + "-agent" if item == "assistant" else NAVIGATION[item]
 
 
 def rpc(client, method, **data):
@@ -56,25 +58,32 @@ def verify_identity(clients):
         state = good("bootstrap " + key, client, "portals.bootstrap")
         h.check("actual portal set " + key, {row["id"] for row in state["portals"]} == PORTALS[key])
         h.check("server identity " + key, state["user"] == h.ACCOUNTS[key])
-        ai = good("current roles " + key, client, "ai.api.bootstrap")
-        h.check("current role set " + key, set(ai["roles"]) == ROLES[key])
         for portal in PORTALS[key]:
             switched = good("authorized portal " + key + "/" + portal, client,
                             "portals.bootstrap", portal=portal)
             h.check("selected presentation " + key + "/" + portal, switched["portal"] == portal)
+            h.check("navigation scoped " + key + "/" + portal,
+                    all(row["route"] == route(row["id"], portal) for row in switched["navigation"]))
+            ai = good("current role " + key + "/" + portal, client, "ai.api.bootstrap", portal=portal)
+            h.check("single Agent role " + key + "/" + portal,
+                    set(ai["roles"]) == {PORTAL_ROLES[portal]})
         for portal in {"teacher", "secretary", "student"} - PORTALS[key]:
             no("foreign portal denied " + key + "/" + portal, client, "portals.bootstrap", portal=portal)
+            no("foreign Agent denied " + key + "/" + portal, client, "ai.api.bootstrap", portal=portal)
     secretary = clients["secretary"]
-    before = good("dual role before", secretary, "ai.api.bootstrap")["roles"]
+    before = set(good("dual role before", secretary, "ai.api.bootstrap", portal="student")["roles"])
     for portal in ("student", "secretary", "student", "secretary"):
         state = good("dual role switch " + portal, secretary, "portals.bootstrap", portal=portal)
         h.check("dual role retains both entries " + portal,
                 {row["id"] for row in state["portals"]} == {"student", "secretary"})
+        h.check("dual role only selected Agent entry " + portal,
+                {row["route"] for row in state["navigation"] if row["id"] == "assistant"}
+                == {route("assistant", portal)})
         h.check("dual role can manage ordinary students " + portal,
                 good("account authority " + portal, secretary, "accounts.bootstrap")["can_manage"] is True)
         no("dual role never becomes teacher " + portal, secretary, "portals.directions")
-    after = good("dual role after", secretary, "ai.api.bootstrap")["roles"]
-    h.check("role switch does not change assigned roles", set(before) == set(after) == ROLES["secretary"])
+    after = set(good("dual role after", secretary, "ai.api.bootstrap", portal="student")["roles"])
+    h.check("role switch does not change Agent binding", before == after == {PORTAL_ROLES["student"]})
     for key in ("one", "two"):
         no("student cannot maintain home " + key, clients[key], "portals.home_settings")
         no("student cannot read teacher student list " + key, clients[key], "portals.teacher_students")
@@ -163,11 +172,12 @@ def verify_home(clients, nonce, evidence, cleanup):
                    introduction=intro, navigation=nav, expected_revision=original["revision"])
     cleanup["home_touched"] = True
     h.check("home exact text and navigation order", changed["introduction"] == intro and changed["navigation"] == nav)
-    h.check("fixed navigation IDs retained", {row["id"] for row in nav} == set(NAVIGATION))
+    h.check("fixed navigation IDs retained", {row["id"] for row in nav} == set(NAVIGATION) | {"assistant"})
     h.check("home optimistic revision advanced", changed["revision"] == original["revision"] + 1)
     public = good("render configured navigation", student, "portals.bootstrap")
     h.check("home introduction shown", public["introduction"] == intro)
-    h.check("navigation targets fixed in source", all(row["route"] == NAVIGATION[row["id"]] for row in public["navigation"]))
+    h.check("navigation targets fixed in source", all(row["route"] == route(row["id"], "student")
+                                                       for row in public["navigation"]))
     h.check("hidden navigation stays hidden", not any(row["id"] == nav[1]["id"] for row in public["navigation"]))
     no("stale home write rejected", secretary, "portals.save_home", introduction="旧覆盖",
        navigation=nav, expected_revision=original["revision"])

@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 import frappe
 
-from research_group.ai.config import limits, mode, server_configuration
+from research_group.ai.config import DEFAULT_MODEL, limits, mode, server_configuration
 from research_group.ai.context import INSTRUCTIONS
 from research_group.ai.storage import dumps
 from research_group.ai.tools import DESCRIPTIONS, SCHEMAS, available
@@ -257,7 +257,7 @@ class _LangChainSession:
         if (parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password or parsed.query
                 or parsed.fragment or endpoint not in (configuration.get("rg_ai_allowed_base_urls") or [])):
             frappe.throw("模型端点未在服务端批准清单内。")
-        model, key = configuration.get("rg_ai_model"), configuration.get("rg_ai_api_key")
+        model, key = configuration.get("rg_ai_model") or DEFAULT_MODEL, configuration.get("rg_ai_api_key")
         protocol = configuration.get("rg_ai_protocol", "responses")
         if not model or not key or protocol not in {"responses", "chat_completions"}:
             frappe.throw("共享模型服务尚未配置完整。")
@@ -290,7 +290,8 @@ class _LangChainSession:
                                          use_responses_api=protocol == "responses", output_version="v0",
                                          use_previous_response_id=False, store=False,
                                          max_tokens=limits()["output_tokens"], callbacks=[],
-                                         include_response_headers=False)
+                                         include_response_headers=False,
+                                         reasoning_effort=self.ctx.reasoning_effort)
                     bound = adapter.bind_tools(strict_tools(available(self.ctx.check()["roles"])),
                                                strict=True, parallel_tool_calls=False)
                     return await asyncio.wait_for(bound.ainvoke(self.messages, config={"callbacks": []}), remaining)

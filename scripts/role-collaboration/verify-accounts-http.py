@@ -145,6 +145,7 @@ class Fixture:
 
     def call(self, action, **values):
         request = {"action": action, "site": self.args.site, "base": self.args.base,
+                   "expected_db_name": self.args.expected_db_name,
                    "prefix": self.prefix, **values}
         # Source + request travel over stdin, never process arguments/logs.
         source = self.source + "\nprint(json.dumps(private_main(" + repr(request) + ")))\n"
@@ -255,7 +256,8 @@ class NativeSessionFlight:
         sid = next((cookie.value for cookie in self.client.jar if cookie.name == "sid"), "")
         check("在途原生Session使用真实登录sid", bool(sid and sid != "Guest"))
         args = self.fixture.args
-        request = {"site": args.site, "base": args.base, "prefix": self.fixture.prefix,
+        request = {"site": args.site, "base": args.base, "expected_db_name": args.expected_db_name,
+                   "prefix": self.fixture.prefix,
                    "user": self.user, "sid": sid}
         self.process = subprocess.Popen([
             "docker", "exec", "-i", "--workdir", "/home/frappe/frappe-bench/sites", args.container,

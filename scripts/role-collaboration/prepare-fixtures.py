@@ -1,6 +1,7 @@
 """Private-pipe preparation of candidate-only fictional verified contacts."""
 import json
 import os
+import re
 import frappe
 
 def prepare(request):
@@ -9,7 +10,11 @@ def prepare(request):
     frappe.init(SITE, sites_path="/home/frappe/frappe-bench/sites")
     frappe.connect()
     try:
-        assert str(frappe.conf.db_name).startswith("rg_candidate_")
+        named = request.get("expected_db_name")
+        if named is not None:
+            assert re.fullmatch(r"_[0-9a-f]{16}", named) and frappe.conf.db_name == named
+        else:
+            assert str(frappe.conf.db_name).startswith("rg_candidate_")
         assert frappe.conf.host_name == request["base"]
         assert frappe.conf.rg_mail_mode == "capture" and frappe.conf.mute_emails and frappe.conf.allow_tests
         frappe.set_user("Administrator")
